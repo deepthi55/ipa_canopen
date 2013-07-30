@@ -537,7 +537,24 @@ namespace canopen{
         uint16_t mydata_low = m.Msg.DATA[0];
         uint16_t mydata_high = m.Msg.DATA[1];
 
-        std::cout << "EMCY" << (uint16_t)CANid << " is: " << (uint16_t)m.Msg.DATA[0] << std::endl;
+       
+
+        if (mydata_low == 0)
+        {
+            devices[CANid].setEMCYreleased(true);
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            devices[CANid].setEMCYpressed(false);
+        }
+        
+        else
+        {
+            devices[CANid].setEMCYpressed(true);
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            devices[CANid].setEMCYreleased(false);
+        }
+
+
+        //std::cout << "EMCY" << (uint16_t)CANid << " is: " << (uint16_t)m.Msg.DATA[1] << std::endl;
 
 
     }

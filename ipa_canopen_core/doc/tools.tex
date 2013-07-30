@@ -32,5 +32,15 @@ This tool takes five arguments:
 
 When first moving your device, it is recommended to start with low target velocities. Also note that some devices may enter an error or emergency state if the requested acceleration towards target velocity is too high.
 
+\section{The {\em get\_error} tool}
+
+This tool takes two arguments:
+
+\begin{itemize}
+\item The name of the CAN device file, e.g. /dev/pcan32
+\item The CAN device ID of the module to be homed, in decimal notation
+\end{itemize}
+
+When successfully evoking this command, you will get the content of the errors registers from the device, naming the Manufacturer status register and the CANOpen standard errors register. This information is useful for debugging the status of the devices, and checking the source of problems when commanding the device.
 
 

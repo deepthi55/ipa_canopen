@@ -22,15 +22,18 @@ You will need the following free tools, which are available for all operating sy
 \section{CAN device driver}
 \label{chap:installation:devicedriver}
 
-Currently, the library has only been tested with the PCAN-USB CAN interface for USB from Peak System. It has been tested with version 7.5. The Linux user manual for the Peak interface is available at: \url{http://www.peak-system.com/fileadmin/media/linux/files/PCAN%20Driver%20for%20Linux_eng_7.1.pdf}. Briefly, to install the drivers under Linux, proceed as follows:
+Currently, the library has only been tested with the PCAN-USB CAN interface for USB from Peak System. It has been tested with version 7.6. The Linux user manual for the Peak interface is available at: \url{http://www.peak-system.com/fileadmin/media/linux/files/PCAN%20Driver%20for%20Linux_eng_7.1.pdf}. Briefly, to install the drivers under Linux, proceed as follows:
   \begin{itemize}
-  \item Download and unpack the driver: \url{http://www.peak-system.com/fileadmin/media/linux/files/peak-linux-driver-7.5.tar.gz}.
+  \item Download and unpack the driver: \url{http://www.peak-system.com/fileadmin/media/linux/files/peak-linux-driver-7.6.tar.gz}.
   \item \texttt{cd peak-linux-driver-x.y}
   \item \texttt{make clean}
   \item Use the chardev driver: \texttt{make NET=NO}\\
     {\bf Note: The option \texttt{NET=no} is crucial!}
   \item \texttt{sudo make install}
   \item \texttt{/sbin/modprobe pcan}
+  
+  If the Kernel is newer than 3.5 the following driver should be downloaded:
+  \url{http://www.peak-system.com/fileadmin/media/linux/files/peak-linux-driver-7.7.tar.gz}
 
   \item Test that the driver is working:
     \begin{itemize}

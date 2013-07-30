@@ -447,8 +447,21 @@ int main(int argc, char **argv)
         diagnostic_msgs::KeyValue keyval;
 
         std::vector<diagnostic_msgs::KeyValue> keyvalues;
+/*
+        // check for emergency stop pressed
+        for (auto device : canopen::devices){
+            if (device.second.getEMCYpressed()){
+            ROS_WARN("Emergency button pressed. Device with CANid %d disabled", device.second.getCANid());
+            }
+        }
 
-
+        // check for emergency stop released
+        for (auto device : canopen::devices){
+            if (device.second.getEMCYreleased()){
+            ROS_INFO("Emergency button released. Device with CANid %d enabled", device.second.getCANid());
+            }
+        } 
+        */
 
         diagnostics.status.resize(1);
 
@@ -524,14 +537,14 @@ int main(int argc, char **argv)
           {
             diagstatus.level = 0;
             diagstatus.name = chainNames[0];
-            diagstatus.message = "powerball chain initialized and running";
+            diagstatus.message = "lwa4p chain initialized and running";
             diagstatus.values = keyvalues;
           }
           else
           {
             diagstatus.level = 1;
             diagstatus.name = chainNames[0];
-            diagstatus.message = "powerball chain not initialized";
+            diagstatus.message = "lwa4p chain not initialized";
             diagstatus.values = keyvalues;
             break;
           }
