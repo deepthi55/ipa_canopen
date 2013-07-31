@@ -550,7 +550,6 @@ namespace canopen{
     /***************************************************************/
     //		define global variables and functions
     /***************************************************************/
-
     inline bool operator<(const SDOkey &a, const SDOkey&b) {
             return a.index < b.index || (a.index == b.index && a.subindex < b.subindex);
     }
@@ -604,6 +603,7 @@ namespace canopen{
     bool openConnection(std::string devName);
     void init(std::string deviceFile, std::chrono::milliseconds syncInterval);
     void pre_init();
+    void process_errors(uint16_t CANid, TPCANRdMsg* m);
     void recover(std::string deviceFile, std::chrono::milliseconds syncInterval);
 
     extern std::function< void (uint16_t CANid, double positionValue) > sendPos;

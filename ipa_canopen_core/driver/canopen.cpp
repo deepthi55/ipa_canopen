@@ -91,6 +91,7 @@ namespace canopen{
 
     void pre_init()
     {
+
         canopen::NMTmsg.ID = 0;
         canopen::NMTmsg.MSGTYPE = 0x00;
         canopen::NMTmsg.LEN = 2;
@@ -111,33 +112,38 @@ namespace canopen{
 
         TPCANRdMsg m;
 
+        canopen::process_errors(dg.second.getCANid(), &m);
 
-        canopen::readErrorsRegister(dg.second.getCANid(), &m);
+        }
+    }
+
+    void process_errors(uint16_t CANid, TPCANRdMsg* m)
+    {
+        canopen::readErrorsRegister(CANid, m);
 
         /***************************************************************/
         //		Manufacturer specific errors register
         /***************************************************************/
-        canopen::readManErrReg(dg.second.getCANid(), &m);
+        canopen::readManErrReg(CANid, m);
 
         /**************************
          * Hardware and Software Information
         *************************/
 
-        std::vector<uint16_t> vendor_id = canopen::obtainVendorID(dg.second.getCANid(), &m);
-        uint16_t rev_number = canopen::obtainRevNr(dg.second.getCANid(), &m);
-        std::vector<uint16_t> product_code = canopen::obtainProdCode(dg.second.getCANid(), &m);
-        std::vector<char> manufacturer_device_name = canopen::obtainManDevName(dg.second.getCANid(),&m);
-        std::vector<char> manufacturer_hw_version =  canopen::obtainManHWVersion(dg.second.getCANid(), &m);
-        std::vector<char> manufacturer_sw_version =  canopen::obtainManSWVersion(dg.second.getCANid(), &m);
+        std::vector<uint16_t> vendor_id = canopen::obtainVendorID(CANid, m);
+        uint16_t rev_number = canopen::obtainRevNr(CANid, m);
+        std::vector<uint16_t> product_code = canopen::obtainProdCode(CANid, m);
+        std::vector<char> manufacturer_device_name = canopen::obtainManDevName(CANid,m);
+        std::vector<char> manufacturer_hw_version =  canopen::obtainManHWVersion(CANid, m);
+        std::vector<char> manufacturer_sw_version =  canopen::obtainManSWVersion(CANid, m);
 
 
-        devices[dg.second.getCANid()].setManufacturerHWVersion(manufacturer_hw_version);
-        devices[dg.second.getCANid()].setManufacturerSWVersion(manufacturer_sw_version);
-        devices[dg.second.getCANid()].setManufacturerDevName(manufacturer_device_name);
-        devices[dg.second.getCANid()].setVendorID(vendor_id);
-        devices[dg.second.getCANid()].setProdCode(product_code);
-        devices[dg.second.getCANid()].setRevNum(rev_number);
-        }
+        devices[CANid].setManufacturerHWVersion(manufacturer_hw_version);
+        devices[CANid].setManufacturerSWVersion(manufacturer_sw_version);
+        devices[CANid].setManufacturerDevName(manufacturer_device_name);
+        devices[CANid].setVendorID(vendor_id);
+        devices[CANid].setProdCode(product_code);
+        devices[CANid].setRevNum(rev_number);
     }
 
     void init(std::string deviceFile, std::chrono::milliseconds syncInterval){
@@ -240,8 +246,11 @@ namespace canopen{
         }
 
 
+
+
         for (auto device : devices){
             std::cout << "Module with CAN-id " << (uint16_t)device.second.getCANid() << " connected (recover)" << std::endl;
+            pre_init();
         }
 
         for (auto device : devices){
@@ -697,7 +706,7 @@ namespace canopen{
 
             // incoming EMCY
             else if (m.Msg.ID >= 0x081 && m.Msg.ID <= 0x0FF){
-                std::cout << std::hex << "EMCY received:  " << (uint16_t)m.Msg.ID << "  " << (uint16_t)m.Msg.DATA[0] << " " << (uint16_t)m.Msg.DATA[1] << " " << (uint16_t)m.Msg.DATA[2] << " " << (uint16_t)m.Msg.DATA[3] << " " << (uint16_t)m.Msg.DATA[4] << " " << (uint16_t)m.Msg.DATA[5] << " " << (uint16_t)m.Msg.DATA[6] << " " << (uint16_t)m.Msg.DATA[7] << std::endl;
+                //std::cout << std::hex << "EMCY received:  " << (uint16_t)m.Msg.ID << "  " << (uint16_t)m.Msg.DATA[0] << " " << (uint16_t)m.Msg.DATA[1] << " " << (uint16_t)m.Msg.DATA[2] << " " << (uint16_t)m.Msg.DATA[3] << " " << (uint16_t)m.Msg.DATA[4] << " " << (uint16_t)m.Msg.DATA[5] << " " << (uint16_t)m.Msg.DATA[6] << " " << (uint16_t)m.Msg.DATA[7] << std::endl;
                 if (incomingEMCYHandlers.find(m.Msg.ID) != incomingEMCYHandlers.end())
                     incomingEMCYHandlers[m.Msg.ID](m);
             }
