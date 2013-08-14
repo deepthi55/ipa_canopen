@@ -1,6 +1,6 @@
-
-ADD_LIBRARY( canopen STATIC
+ADD_LIBRARY(canopen STATIC
   canopen.cpp
+  cia_402.cpp
   )
 
 install (TARGETS canopen 
@@ -9,6 +9,7 @@ install (TARGETS canopen
 
 install (FILES 
   canopen.h
+  cia_402.h
   schunkErrors.h
   DESTINATION include)
 

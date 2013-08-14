@@ -10,11 +10,11 @@
  *****************************************************************
  *
  * \note
- *   Project name: ipa_cia_402
+ *   Project name: ipa_canopen
  * \note
- *   ROS stack name: ipa_cia_402
+ *   ROS stack name: ipa_canopen
  * \note
- *   ROS package name: ipa_cia_402_core
+ *   ROS package name: ipa_canopen_core
  *
  * \author
  *   Author: Eduard Herkel, Thiago de Freitas, Tobias Sing
@@ -24,7 +24,7 @@
  * \date Date of creation: December 2012
  *
  * \brief
- *   Implementation of cia_402 driver.
+ *   Implementation of ipa_canopen driver.
  *
  *****************************************************************
  *
@@ -61,20 +61,364 @@
 #include "schunkErrors.h"
 #include "canopen.h"
 
-namespace cia_402{
+namespace cia_402
+{
 
-    /***************************************************************/
-    //			define global variables and functions
-    /***************************************************************/
-    using canopen::syncInterval;
+        std::string Device::getNMTState(){
+            return Device::NMTState_;
+        }
+
+        std::string Device::getMotorState(){
+            return motorState_;
+        }
+
+        std::vector<char> Device::getManufacturerSWVersion(){
+            return manufacturer_sw_version_;
+        }
+
+        std::vector<char> Device::getManufacturerHWVersion(){
+            return manufacturer_hw_version_;
+        }
+
+        std::vector<char> Device::getManufacturerDevName(){
+            return manufacturer_device_name_;
+        }
+
+        std::vector<uint16_t> Device::getVendorID(){
+            return vendor_id_;
+        }
+
+        std::vector<uint16_t> Device::getProdCode(){
+            return product_code_;
+        }
+
+        uint16_t Device::getRevNumber(){
+            return revision_number_;
+        }
+
+        uint8_t Device::getCANid(){
+            return CANid_;
+        }
+        std::string Device::getDeviceFile(){
+            return deviceFile_;
+        }
+        std::string Device::getGroup(){
+            return group_;
+        }
+        std::string Device::getName(){
+            return name_;
+        }
+        bool Device::getInitialized(){
+            return initialized_;
+        }
+
+
+        bool Device::getVoltageEnabled(){
+            return volt_enable_;
+        }
+
+        bool Device::getReadySwitchOn(){
+            return ready_switch_on_;
+        }
+
+        bool Device::getSwitchOn(){
+            return switched_on_;
+        }
+
+        bool Device::getOpEnabled(){
+            return op_enable_;
+        }
+
+        bool Device::getQuickStop(){
+            return quick_stop_;
+        }
+
+        bool Device::getSwitchOnDisabled(){
+            return switch_on_disabled_;
+        }
+
+        bool Device::getWarning(){
+            return warning_;
+        }
+
+        bool Device::getModeSpecific(){
+            return mode_specific_;
+        }
+
+        bool Device::getRemote(){
+            return remote_;
+        }
+        bool Device::getTargetReached(){
+            return target_reached_;
+        }
+
+        bool Device::getInternalLimits(){
+            return internal_limit_;
+        }
+
+
+        bool Device::getOpSpec0(){
+            return op_specific_;
+        }
+
+        bool Device::getOpSpec1(){
+            return op_specific1_;
+        }
+
+        bool Device::getManSpec1(){
+            return man_specific1_;
+        }
+
+        bool Device::getmanSpec2(){
+            return man_specific2_;
+        }
+
+        bool Device::getHomingError(){
+            return homingError_;
+        }
+
+        bool Device::getFault(){
+            return fault_;
+        }
+
+        bool Device::getIPMode(){
+            return ip_mode_active_;
+        }
+
+        bool Device::getDriveReferenced(){
+            return driveReferenced_;
+        }
+        double Device::getActualPos(){
+            return actualPos_;
+        }
+        double Device::getDesiredPos(){
+            return desiredPos_;
+        }
+
+        double Device::getActualVel(){
+            return actualVel_;
+        }
+
+        double Device::getDesiredVel(){
+            return desiredVel_;
+        }
+
+        inline std::chrono::milliseconds Device::getTimeStamp_msec(){
+            return timeStamp_msec_;
+        }
+
+        inline std::chrono::microseconds Device::getTimeStamp_usec(){
+            return timeStamp_usec_;
+        }
+
+        void Device::setActualPos(double pos){
+            actualPos_ = pos;
+        }
+
+        void Device::setDesiredPos(double pos){
+            desiredPos_ = pos;
+        }
+
+        void Device::setActualVel(double vel){
+            actualVel_ = vel;
+        }
+
+        void Device::setDesiredVel(double vel){
+            desiredVel_ = vel;
+        }
+
+        void Device::setMotorState(std::string nextState){
+            motorState_ = nextState;
+        }
+
+        void Device::setManufacturerSWVersion(std::vector<char> ms_version){
+            manufacturer_sw_version_ = ms_version;
+        }
+
+        void Device::setManufacturerHWVersion(std::vector<char> mh_version){
+            manufacturer_hw_version_ = mh_version;
+        }
+
+        void Device::setManufacturerDevName(std::vector<char> dev_name){
+            manufacturer_device_name_ = dev_name;
+        }
+
+        void Device::setVendorID(std::vector<uint16_t> v_id){
+            vendor_id_ = v_id;
+        }
+
+        void Device::setProdCode(std::vector<uint16_t> prod_code){
+            product_code_ = prod_code;
+        }
+
+
+        void Device::setRevNum(uint16_t rev_num){
+            revision_number_ = rev_num;
+        }
+
+
+        void Device::setNMTState(std::string nextState){
+            NMTState_ = nextState;
+        }
+
+
+        void Device::setVoltageEnabled(bool voltage_enabled){
+            volt_enable_ = voltage_enabled;
+        }
+
+        void Device::setReadySwitchON(bool r_switch_on){
+            ready_switch_on_ = r_switch_on;
+        }
+
+        void Device::setSwitchON(bool switch_on){
+            switched_on_ = switch_on;
+        }
+
+        void Device::setOpEnable(bool op_enable){
+            op_enable_ = op_enable;
+        }
+
+        void Device::setQuickStop(bool quick_stop){
+            quick_stop_ = quick_stop;
+        }
+
+        void Device::setSwitchOnDisable(bool switch_disabled){
+            switch_on_disabled_ = switch_disabled;
+        }
+
+        void Device::setWarning(bool warning){
+            warning_ = warning;
+        }
+
+
+        void Device::setModeSpec(bool modespec){
+            mode_specific_ = modespec;
+        }
+
+
+        void Device::setRemote(bool remote){
+            remote_ = remote;
+        }
+
+        void Device::setManSpec1(bool manspec1){
+            man_specific1_ = manspec1;
+        }
+
+        void Device::setTargetReached(bool target_reached){
+            target_reached_ = target_reached;
+        }
+
+        void Device::setInternalLimits(bool internal_limits){
+            internal_limit_ = internal_limits;
+        }
+
+
+        void Device::setManSpec2(bool manspec2){
+            man_specific2_ = manspec2;
+        }
+
+        void Device::setOpSpec1(bool opspec1){
+            op_specific1_ = opspec1;
+        }
+
+        void Device::setOpSpec0(bool opspec0){
+            op_specific_ = opspec0;
+        }
+
+        void Device::setFault(bool fault){
+            fault_ = fault;
+        }
+
+        void Device::setIPMode(bool ip_mode){
+            ip_mode_active_ = ip_mode;
+        }
+
+        void Device::setHoming(bool homing_error){
+            homingError_ = homing_error;
+        }
+
+        void Device::setInitialized(bool initialized){
+            initialized_ = initialized;
+        }
+
+        void Device::updateDesiredPos()
+        {
+            desiredPos_ += desiredVel_ * (canopen::syncInterval.count() / 1000.0);
+        }
+
+        void Device::setTimeStamp_msec(std::chrono::milliseconds timeStamp){
+            timeStamp_msec_ = timeStamp;
+        }
+
+        void Device::setTimeStamp_usec(std::chrono::microseconds timeStamp){
+            timeStamp_usec_ = timeStamp;
+        }
+
+        void Device::setEMCYpressed(bool pressed){
+            emcy_pressed_ = pressed;
+        }
+
+        void Device::setEMCYreleased(bool released){
+            emcy_released_ = released;
+        }
+
+        bool Device::getEMCYpressed(){
+            return emcy_pressed_;
+        }
+        bool Device::getEMCYreleased(){
+            return emcy_released_;
+        }
+
+
+        std::vector<uint8_t> DeviceGroup::getCANids(){
+            return CANids_;
+        }
+
+        std::vector<std::string> DeviceGroup::getNames(){
+            return names_;
+        }
+
+        std::vector<double> DeviceGroup::getActualPos() {
+                std::vector<double> actualPos;
+                for (uint8_t CANid : CANids_)
+                actualPos.push_back(devices[CANid].getActualPos());
+                return actualPos;
+            }
+
+            std::vector<double> DeviceGroup::getDesiredPos() {
+                std::vector<double> desiredPos;
+                for (auto CANid : CANids_)
+                    desiredPos.push_back(devices[CANid].getDesiredPos());
+                return desiredPos;
+            }
+
+        std::vector<double> DeviceGroup::getActualVel() {
+            std::vector<double> actualVel;
+            for (auto CANid : CANids_)
+                actualVel.push_back(devices[CANid].getActualVel());
+            return actualVel;
+        }
+
+        std::vector<double> DeviceGroup::getDesiredVel() {
+            std::vector<double> desiredVel;
+            for (auto CANid : CANids_)
+                desiredVel.push_back(devices[CANid].getDesiredVel());
+            return desiredVel;
+        }
+
+        void DeviceGroup::setVel(std::vector<double> velocities) {
+            for (unsigned int i=0; i<velocities.size(); i++) {
+                devices[CANids_[i]].setDesiredVel(velocities[i]);
+            }
+            }
+
     std::map<uint8_t, Device> devices;
     std::map<std::string, DeviceGroup> deviceGroups;
-    HANDLE h;
-    std::map<SDOkey, std::function<void (uint8_t CANid, BYTE data[8])> > incomingDataHandlers{ { STATUSWORD, statusword_incoming } };
-    std::map<SDOkey, std::function<void (uint8_t CANid, BYTE data[8])> > incomingErrorHandlers{ { ERRORWORD, errorword_incoming } };
+
+    std::map<canopen::SDOkey, std::function<void (uint8_t CANid, BYTE data[8])> > incomingDataHandlers{ { STATUSWORD, statusword_incoming } };
+    std::map<canopen::SDOkey, std::function<void (uint8_t CANid, BYTE data[8])> > incomingErrorHandlers{ { ERRORWORD, errorword_incoming } };
     std::map<uint16_t, std::function<void (const TPCANRdMsg m)> > incomingPDOHandlers;
     std::map<uint16_t, std::function<void (const TPCANRdMsg m)> > incomingEMCYHandlers;
-    bool recover_active;
 
     /***************************************************************/
     //		define init and recover sequence
@@ -82,30 +426,22 @@ namespace cia_402{
 
     bool atFirstInit = true;
 
-    bool openConnection(std::string devName){
-        h = LINUX_CAN_Open(devName.c_str(), O_RDWR);
-        if (!h)
-            return false;
-        errno = CAN_Init(h, CAN_BAUD_500K, CAN_INIT_TYPE_ST);
-        return true;
-    }
-
     void pre_init()
     {
 
-        cia_402::NMTmsg.ID = 0;
-        cia_402::NMTmsg.MSGTYPE = 0x00;
-        cia_402::NMTmsg.LEN = 2;
+        canopen::NMTmsg.ID = 0;
+        canopen::NMTmsg.MSGTYPE = 0x00;
+        canopen::NMTmsg.LEN = 2;
 
-        cia_402::syncMsg.ID = 0x80;
-        cia_402::syncMsg.MSGTYPE = 0x00;
+        canopen::syncMsg.ID = 0x80;
+        canopen::syncMsg.MSGTYPE = 0x00;
 
-        cia_402::syncMsg.LEN = 0x00;
+        canopen::syncMsg.LEN = 0x00;
 
         for (auto dg : (cia_402::devices))
         {
         /*********************************************/
-        cia_402::sendNMT(dg.second.getCANid(), cia_402::NMT_START_REMOTE_NODE);
+       canopen::sendNMT(dg.second.getCANid(), cia_402::NMT_START_REMOTE_NODE);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -148,20 +484,20 @@ namespace cia_402{
     }
 
     void init(std::string deviceFile, std::chrono::milliseconds syncInterval){
-        CAN_Close(h);
+        CAN_Close(canopen::h);
 
-        NMTmsg.ID = 0;
-        NMTmsg.MSGTYPE = 0x00;
-        NMTmsg.LEN = 2;
+        canopen::NMTmsg.ID = 0;
+        canopen::NMTmsg.MSGTYPE = 0x00;
+        canopen::NMTmsg.LEN = 2;
 
-        syncMsg.ID = 0x80;
-        syncMsg.MSGTYPE = 0x00;
+        canopen::syncMsg.ID = 0x80;
+        canopen::syncMsg.MSGTYPE = 0x00;
 
-        syncMsg.LEN = 0x00;
+        canopen::syncMsg.LEN = 0x00;
 
-        recover_active = false;
+        canopen::recover_active = false;
 
-        if (!cia_402::openConnection(deviceFile)){
+        if (!canopen::openConnection(deviceFile)){
             std::cout << "Cannot open CAN device; aborting." << std::endl;
             exit(EXIT_FAILURE);
         }
@@ -186,9 +522,9 @@ namespace cia_402{
 
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             std::cout << "Resetting CAN-device with CAN-ID " << (uint16_t)device.second.getCANid() << std::endl;
-            cia_402::sendNMT((uint16_t)device.second.getCANid(), cia_402::NMT_RESET_NODE);
+           canopen::sendNMT((uint16_t)device.second.getCANid(), cia_402::NMT_RESET_NODE);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            cia_402::sendNMT((uint16_t)device.second.getCANid(), cia_402::NMT_START_REMOTE_NODE);
+           canopen::sendNMT((uint16_t)device.second.getCANid(), cia_402::NMT_START_REMOTE_NODE);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 
@@ -204,11 +540,11 @@ namespace cia_402{
             cia_402::setMotorState(device.second.getCANid(), cia_402::MS_OPERATION_ENABLED);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-            sendSDO((uint16_t)device.second.getCANid(), cia_402::IP_TIME_UNITS, (uint8_t) syncInterval.count() );
+            canopen::sendSDO((uint16_t)device.second.getCANid(), cia_402::IP_TIME_UNITS, (uint8_t) syncInterval.count() );
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            sendSDO((uint16_t)device.second.getCANid(), cia_402::IP_TIME_INDEX, (uint8_t)cia_402::IP_TIME_INDEX_MILLISECONDS);
+            canopen::sendSDO((uint16_t)device.second.getCANid(), cia_402::IP_TIME_INDEX, (uint8_t)cia_402::IP_TIME_INDEX_MILLISECONDS);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            sendSDO((uint16_t)device.second.getCANid(), cia_402::SYNC_TIMEOUT_FACTOR, (uint8_t)cia_402::SYNC_TIMEOUT_FACTOR_DISABLE_TIMEOUT);
+            canopen::sendSDO((uint16_t)device.second.getCANid(), cia_402::SYNC_TIMEOUT_FACTOR, (uint8_t)cia_402::SYNC_TIMEOUT_FACTOR_DISABLE_TIMEOUT);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
         }
@@ -224,21 +560,21 @@ namespace cia_402{
 
 
     void recover(std::string deviceFile, std::chrono::milliseconds syncInterval){
-        CAN_Close(h);
+        CAN_Close(canopen::h);
 
 
-        recover_active = true;
+        canopen::recover_active = true;
 
-        NMTmsg.ID = 0;
-        NMTmsg.MSGTYPE = 0x00;
-        NMTmsg.LEN = 2;
+        canopen::NMTmsg.ID = 0;
+        canopen::NMTmsg.MSGTYPE = 0x00;
+        canopen::NMTmsg.LEN = 2;
 
-        syncMsg.ID = 0x80;
-        syncMsg.MSGTYPE = 0x00;
+        canopen::syncMsg.ID = 0x80;
+        canopen::syncMsg.MSGTYPE = 0x00;
 
-        syncMsg.LEN = 0x00;
+        canopen::syncMsg.LEN = 0x00;
 
-        if (!cia_402::openConnection(deviceFile)){
+        if (!canopen::openConnection(deviceFile)){
             std::cout << "Cannot open CAN device; aborting." << std::endl;
             exit(EXIT_FAILURE);
         }
@@ -251,7 +587,7 @@ namespace cia_402{
 
         for (auto device : devices){
             std::cout << "Module with CAN-id " << (uint16_t)device.second.getCANid() << " connected (recover)" << std::endl;
-            pre_init();
+           // pre_init();
         }
 
         for (auto device : devices){
@@ -263,20 +599,20 @@ namespace cia_402{
             else
             {
 
-                cia_402::sendSDO(device.second.getCANid(), cia_402::CONTROLWORD, cia_402:: CONTROLWORD_HALT);
+                canopen::sendSDO(device.second.getCANid(), cia_402::CONTROLWORD, cia_402:: CONTROLWORD_HALT);
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-                cia_402::sendSDO(device.second.getCANid(), cia_402::CONTROLWORD, cia_402:: CONTROLWORD_DISABLE_INTERPOLATED);
+                canopen::sendSDO(device.second.getCANid(), cia_402::CONTROLWORD, cia_402:: CONTROLWORD_DISABLE_INTERPOLATED);
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-                cia_402::sendSDO(device.second.getCANid(), cia_402::CONTROLWORD, cia_402:: CONTROL_WORD_DISABLE_VOLTAGE);
+                canopen::sendSDO(device.second.getCANid(), cia_402::CONTROLWORD, cia_402:: CONTROL_WORD_DISABLE_VOLTAGE);
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-                cia_402::sendSDO(device.second.getCANid(), cia_402::CONTROLWORD, cia_402::CONTROLWORD_QUICKSTOP);
-                cia_402::sendSDO(device.second.getCANid(), cia_402::STATUSWORD);
+                canopen::sendSDO(device.second.getCANid(), cia_402::CONTROLWORD, cia_402::CONTROLWORD_QUICKSTOP);
+                canopen::sendSDO(device.second.getCANid(), cia_402::STATUSWORD);
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
                 cia_402::setMotorState(device.second.getCANid(), cia_402::MS_SWITCHED_ON_DISABLED);
@@ -291,11 +627,11 @@ namespace cia_402{
                 cia_402::setMotorState(device.second.getCANid(), cia_402::MS_OPERATION_ENABLED);
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-                sendSDO((uint16_t)device.second.getCANid(), cia_402::IP_TIME_UNITS, (uint8_t) syncInterval.count() );
+                canopen::sendSDO((uint16_t)device.second.getCANid(), cia_402::IP_TIME_UNITS, (uint8_t) syncInterval.count() );
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                sendSDO((uint16_t)device.second.getCANid(), cia_402::IP_TIME_INDEX, (uint8_t)cia_402::IP_TIME_INDEX_MILLISECONDS);
+                canopen::sendSDO((uint16_t)device.second.getCANid(), cia_402::IP_TIME_INDEX, (uint8_t)cia_402::IP_TIME_INDEX_MILLISECONDS);
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                sendSDO((uint16_t)device.second.getCANid(), cia_402::SYNC_TIMEOUT_FACTOR, (uint8_t)cia_402::SYNC_TIMEOUT_FACTOR_DISABLE_TIMEOUT);
+                canopen::sendSDO((uint16_t)device.second.getCANid(), cia_402::SYNC_TIMEOUT_FACTOR, (uint8_t)cia_402::SYNC_TIMEOUT_FACTOR_DISABLE_TIMEOUT);
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 
@@ -309,7 +645,7 @@ namespace cia_402{
             cia_402::sendPos((uint16_t)device.second.getCANid(), (double)device.second.getDesiredPos());
 
         }
-        recover_active = false;
+        canopen::recover_active = false;
     }
 
     /***************************************************************/
@@ -322,176 +658,50 @@ namespace cia_402{
 
     void setMotorState(uint16_t CANid, std::string targetState){
         while (devices[CANid].getMotorState() != targetState){
-                    cia_402::sendSDO(CANid, cia_402::STATUSWORD);
+                    canopen::sendSDO(CANid, cia_402::STATUSWORD);
         if (devices[CANid].getMotorState() == MS_FAULT)
     {
-        cia_402::sendSDO(CANid, cia_402::STATUSWORD);
+        canopen::sendSDO(CANid, cia_402::STATUSWORD);
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
         if(!devices[CANid].getFault())
         {
-            cia_402::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_0);
-            cia_402::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_0);
-            cia_402::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_0);
-            cia_402::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_0);
-            cia_402::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_0);
-            cia_402::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_0);
+            canopen::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_0);
+            canopen::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_0);
+            canopen::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_0);
+            canopen::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_0);
+            canopen::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_0);
+            canopen::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_0);
         }
         else
         {
         //std::this_thread::sleep_for(std::chrono::milliseconds(50));
-            cia_402::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_1);
-            cia_402::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_1);
-            cia_402::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_1);
-            cia_402::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_1);
-            cia_402::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_1);
-            cia_402::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_1);
+            canopen::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_1);
+            canopen::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_1);
+            canopen::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_1);
+            canopen::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_1);
+            canopen::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_1);
+            canopen::sendSDO(CANid, cia_402::CONTROLWORD, cia_402:: CONTROLWORD_FAULT_RESET_1);
         }
 
         }
 
         if (devices[CANid].getMotorState() == MS_NOT_READY_TO_SWITCH_ON){
-            cia_402::sendSDO(CANid, cia_402::STATUSWORD);
+            canopen::sendSDO(CANid, cia_402::STATUSWORD);
         }
 
         if (devices[CANid].getMotorState() == MS_SWITCHED_ON_DISABLED){
-            cia_402::sendSDO(CANid, cia_402::CONTROLWORD, cia_402::CONTROLWORD_SHUTDOWN);
+            canopen::sendSDO(CANid, cia_402::CONTROLWORD, cia_402::CONTROLWORD_SHUTDOWN);
         }
         if (devices[CANid].getMotorState() == MS_READY_TO_SWITCH_ON){
-            cia_402::sendSDO(CANid, cia_402::CONTROLWORD, cia_402::CONTROLWORD_SWITCH_ON);
+            canopen::sendSDO(CANid, cia_402::CONTROLWORD, cia_402::CONTROLWORD_SWITCH_ON);
         }
         if (devices[CANid].getMotorState() == MS_SWITCHED_ON){
-            cia_402::sendSDO(CANid, cia_402::CONTROLWORD, cia_402::CONTROLWORD_ENABLE_OPERATION);
+            canopen::sendSDO(CANid, cia_402::CONTROLWORD, cia_402::CONTROLWORD_ENABLE_OPERATION);
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
         }
-
-    /***************************************************************/
-    //			define NMT variables
-    /***************************************************************/
-
-    TPCANMsg NMTmsg;
-
-    /***************************************************************/
-    //			define SYNC variables
-    /***************************************************************/
-
-    TPCANMsg syncMsg;
-
-    /***************************************************************/
-    //		define SDO protocol functions
-    /***************************************************************/
-
-    void requestDataBlock1(uint8_t CANid){
-        TPCANMsg msg;
-        msg.ID = CANid + 0x600;
-        msg.MSGTYPE = 0x00;
-        msg.LEN = 8;
-        msg.DATA[0] = 0x60;
-        msg.DATA[1] = 0x00;
-        msg.DATA[2] = 0x00;
-        msg.DATA[3] = 0x00;
-        msg.DATA[4] = 0x00;
-        msg.DATA[5] = 0x00;
-        msg.DATA[6] = 0x00;
-        msg.DATA[7] = 0x00;
-        CAN_Write(h, &msg);
-    }
-
-    void requestDataBlock2(uint8_t CANid){
-        TPCANMsg msg;
-        msg.ID = CANid + 0x600;
-        msg.MSGTYPE = 0x00;
-        msg.LEN = 8;
-        msg.DATA[0] = 0x70;
-        msg.DATA[1] = 0x00;
-        msg.DATA[2] = 0x00;
-        msg.DATA[3] = 0x00;
-        msg.DATA[4] = 0x00;
-        msg.DATA[5] = 0x00;
-        msg.DATA[6] = 0x00;
-        msg.DATA[7] = 0x00;
-        CAN_Write(h, &msg);
-    }
-
-    void sendSDO(uint8_t CANid, SDOkey sdo){
-        TPCANMsg msg;
-        msg.ID = CANid + 0x600;
-        msg.MSGTYPE = 0x00;
-        msg.LEN = 8;
-        msg.DATA[0] = 0x40;
-        msg.DATA[1] = sdo.index & 0xFF;
-        msg.DATA[2] = (sdo.index >> 8) & 0xFF;
-        msg.DATA[3] = sdo.subindex;
-        msg.DATA[4] = 0x00;
-        msg.DATA[5] = 0x00;
-        msg.DATA[6] = 0x00;
-        msg.DATA[7] = 0x00;
-        CAN_Write(h, &msg);
-    }
-
-    void sendSDO(uint8_t CANid, SDOkey sdo, uint32_t value){
-        TPCANMsg msg;
-        msg.ID = CANid + 0x600;
-        msg.LEN = 8;
-        msg.DATA[0] = 0x23;
-        msg.DATA[1] = sdo.index & 0xFF;
-        msg.DATA[2] = (sdo.index >> 8) & 0xFF;
-        msg.DATA[3] = sdo.subindex;
-        msg.DATA[4] = value & 0xFF;
-        msg.DATA[5] = (value >> 8) & 0xFF;
-        msg.DATA[6] = (value >> 16) & 0xFF;
-        msg.DATA[7] = (value >> 24) & 0xFF;
-        CAN_Write(h, &msg);
-    }
-
-    void sendSDO(uint8_t CANid, SDOkey sdo, int32_t value){
-        TPCANMsg msg;
-        msg.ID = CANid + 0x600;
-        msg.LEN = 8;
-        msg.DATA[0] = 0x23;
-        msg.DATA[1] = sdo.index & 0xFF;
-        msg.DATA[2] = (sdo.index >> 8) & 0xFF;
-        msg.DATA[3] = sdo.subindex;
-        msg.DATA[4] = value & 0xFF;
-        msg.DATA[5] = (value >> 8) & 0xFF;
-        msg.DATA[6] = (value >> 16) & 0xFF;
-        msg.DATA[7] = (value >> 24) & 0xFF;
-        CAN_Write(h, &msg);
-    }
-
-    void sendSDO(uint8_t CANid, SDOkey sdo, uint8_t value){
-        TPCANMsg msg;
-        msg.ID = CANid + 0x600;
-        msg.LEN = 8;
-        msg.DATA[0] = 0x2F;
-        msg.DATA[1] = sdo.index & 0xFF;
-        msg.DATA[2] = (sdo.index >> 8) & 0xFF;
-        msg.DATA[3] = sdo.subindex;
-        msg.DATA[4] = value & 0xFF;
-        msg.DATA[5] = 0x00;
-        msg.DATA[6] = 0x00;
-        msg.DATA[7] = 0x00;
-        CAN_Write(h, &msg);
-
-
-    }
-
-    void sendSDO(uint8_t CANid, SDOkey sdo, uint16_t value){
-        TPCANMsg msg;
-        msg.ID = CANid + 0x600;
-        msg.LEN = 8;
-        msg.DATA[0] = 0x2B;
-        msg.DATA[1] = sdo.index & 0xFF;
-        msg.DATA[2] = (sdo.index >> 8) & 0xFF;
-        msg.DATA[3] = sdo.subindex;
-        msg.DATA[4] = value & 0xFF;
-        msg.DATA[5] = (value >> 8) & 0xFF;
-        msg.DATA[6] = 0x00;
-        msg.DATA[7] = 0x00;
-        CAN_Write(h, &msg);
-    }
 
     /***************************************************************/
     //		define PDO protocol functions
@@ -507,15 +717,15 @@ namespace cia_402{
         // todo: init, recover... (e.g. when to start/stop sending SYNCs)
         while (true) {
             auto tic = std::chrono::high_resolution_clock::now();
-            if (!recover_active){
-                for (auto device : cia_402::devices) {
+            if (!canopen::recover_active){
+                for (auto device : devices) {
                     if (device.second.getInitialized()) {
-                        devices[device.first].updateDesiredPos(syncInterval);
+                        devices[device.first].updateDesiredPos();
                         sendPos((uint16_t)device.second.getCANid(), (double)device.second.getDesiredPos());
                     }
                 }
-                cia_402::sendSync();
-                std::this_thread::sleep_for(syncInterval - (std::chrono::high_resolution_clock::now() - tic ));
+                canopen::sendSync();
+                std::this_thread::sleep_for(canopen::syncInterval - (std::chrono::high_resolution_clock::now() - tic ));
             }
 
         }
@@ -538,7 +748,7 @@ namespace cia_402{
         msg.DATA[5] = (mdegPos >> 8) & 0xFF;
         msg.DATA[6] = (mdegPos >> 16) & 0xFF;
         msg.DATA[7] = (mdegPos >> 24) & 0xFF;
-        CAN_Write(h, &msg);
+        CAN_Write(canopen::h, &msg);
     }
 
     void defaultEMCY_incoming(uint16_t CANid, const TPCANRdMsg m) {
@@ -696,7 +906,7 @@ namespace cia_402{
         while(true){
             //std::cout << "Reading incoming data" << std::endl;
             TPCANRdMsg m;
-            errno = LINUX_CAN_Read(h, &m);
+            errno = LINUX_CAN_Read(canopen::h, &m);
             if (errno)
                 perror("LINUX_CAN_Read() error");
 
@@ -727,8 +937,8 @@ namespace cia_402{
 
             // incoming SD0
             else if (m.Msg.ID >= 0x580 && m.Msg.ID <= 0x5FF){
-                //std::cout << std::hex << "SDO received:  " << (uint16_t)m.Msg.ID << "  " << (uint16_t)m.Msg.DATA[0] << " " << (uint16_t)m.Msg.DATA[1] << " " << (uint16_t)m.Msg.DATA[2] << " " << (uint16_t)m.Msg.DATA[3] << " " << (uint16_t)m.Msg.DATA[4] << " " << (uint16_t)m.Msg.DATA[5] << " " << (uint16_t)m.Msg.DATA[6] << " " << (uint16_t)m.Msg.DATA[7] << std::endl;
-                SDOkey sdoKey(m);
+                std::cout << std::hex << "SDO received:  " << (uint16_t)m.Msg.ID << "  " << (uint16_t)m.Msg.DATA[0] << " " << (uint16_t)m.Msg.DATA[1] << " " << (uint16_t)m.Msg.DATA[2] << " " << (uint16_t)m.Msg.DATA[3] << " " << (uint16_t)m.Msg.DATA[4] << " " << (uint16_t)m.Msg.DATA[5] << " " << (uint16_t)m.Msg.DATA[6] << " " << (uint16_t)m.Msg.DATA[7] << std::endl;
+                canopen::SDOkey sdoKey(m);
                 if (incomingErrorHandlers.find(sdoKey) != incomingErrorHandlers.end())
                     incomingErrorHandlers[sdoKey](m.Msg.ID - 0x580, m.Msg.DATA);
                 if (incomingDataHandlers.find(sdoKey) != incomingDataHandlers.end())
@@ -755,7 +965,7 @@ namespace cia_402{
  *****************************************************************************/
     void getErrors(uint16_t CANid)
     {
-   cia_402::sendSDO(CANid, cia_402::ERRORWORD);
+   canopen::sendSDO(CANid, cia_402::ERRORWORD);
     }
 
     void errorword_incoming(uint8_t CANid, BYTE data[1])
@@ -767,10 +977,10 @@ namespace cia_402{
     void readManErrReg(uint16_t CANid, TPCANRdMsg *m)
     {
 
-        cia_402::sendSDO(CANid, cia_402::MANUFACTURER);
+        canopen::sendSDO(CANid, cia_402::MANUFACTURER);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-        cia_402::processSingleSDO(CANid, m);
+        canopen::processSingleSDO(CANid, m);
 
         uint16_t code = m->Msg.DATA[4];
         uint16_t classification = m->Msg.DATA[5];
@@ -792,13 +1002,13 @@ namespace cia_402{
 
     void readErrorsRegister(uint16_t CANid, TPCANRdMsg *m)
     {
-        cia_402::sendSDO(CANid, cia_402::STATUSWORD);
+        canopen::sendSDO(CANid, cia_402::STATUSWORD);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        cia_402::processSingleSDO(CANid, m);
+        canopen::processSingleSDO(CANid, m);
 
-        cia_402::sendSDO(CANid, cia_402::ERRORWORD);
+        canopen::sendSDO(CANid, cia_402::ERRORWORD);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        cia_402::processSingleSDO(CANid, m);
+        canopen::processSingleSDO(CANid, m);
 
         uint16_t error_register;
         error_register = m->Msg.DATA[4];
@@ -826,12 +1036,12 @@ namespace cia_402{
 
     std::vector<uint16_t> obtainVendorID(uint16_t CANid, TPCANRdMsg *m)
     {
-        cia_402::sendSDO(CANid, cia_402::IDENTITYVENDORID);
+        canopen::sendSDO(CANid, cia_402::IDENTITYVENDORID);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
         std::vector<uint16_t> vendor_id;
 
-        cia_402::processSingleSDO(CANid, m);
+        canopen::processSingleSDO(CANid, m);
 
         uint16_t id4 = m->Msg.DATA[4];
         uint16_t id3 = m->Msg.DATA[5];
@@ -848,12 +1058,12 @@ namespace cia_402{
 
     std::vector<uint16_t> obtainProdCode(uint16_t CANid, TPCANRdMsg *m)
     {
-        cia_402::sendSDO(CANid, cia_402::IDENTITYPRODUCTCODE);
+        canopen::sendSDO(CANid, cia_402::IDENTITYPRODUCTCODE);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
         std::vector<uint16_t> product_code;
 
-        cia_402::processSingleSDO(CANid, m);
+        canopen::processSingleSDO(CANid, m);
 
         uint16_t id4 = m->Msg.DATA[4];
         uint16_t id3 = m->Msg.DATA[5];
@@ -871,11 +1081,11 @@ namespace cia_402{
 
     uint16_t obtainRevNr(uint16_t CANid, TPCANRdMsg* m)
     {
-        cia_402::sendSDO(CANid, cia_402::IDENTITYREVNUMBER);
+        canopen::sendSDO(CANid, cia_402::IDENTITYREVNUMBER);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
 
-        cia_402::processSingleSDO(CANid, m);
+        canopen::processSingleSDO(CANid, m);
 
         uint16_t rev_number = m->Msg.DATA[4];
 
@@ -885,19 +1095,19 @@ namespace cia_402{
 
     std::vector<char> obtainManDevName(uint16_t CANid, TPCANRdMsg* m)
     {
-        cia_402::sendSDO(CANid, cia_402::MANUFACTURERDEVICENAME);
+        canopen::sendSDO(CANid, cia_402::MANUFACTURERDEVICENAME);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
         std::vector<char> manufacturer_device_name;
 
-        cia_402::processSingleSDO(CANid, m);
+        canopen::processSingleSDO(CANid, m);
 
         int size = m->Msg.DATA[4];
 
-        cia_402::requestDataBlock1(CANid);
+        canopen::requestDataBlock1(CANid);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-        cia_402::processSingleSDO(CANid, m);
+        canopen::processSingleSDO(CANid, m);
 
 
         for (auto it : m->Msg.DATA)
@@ -907,10 +1117,10 @@ namespace cia_402{
         }
 
 
-        cia_402::requestDataBlock2(CANid);
+        canopen::requestDataBlock2(CANid);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-        cia_402::processSingleSDO(CANid, m);
+        canopen::processSingleSDO(CANid, m);
 
 
         for (auto it : m->Msg.DATA)
@@ -928,19 +1138,19 @@ namespace cia_402{
 
      std::vector<char> obtainManHWVersion(uint16_t CANid, TPCANRdMsg* m)
      {
-         cia_402::sendSDO(CANid, cia_402::MANUFACTURERHWVERSION);
+         canopen::sendSDO(CANid, cia_402::MANUFACTURERHWVERSION);
          std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
          std::vector<char> manufacturer_hw_version;
 
-         cia_402::processSingleSDO(CANid, m);
+         canopen::processSingleSDO(CANid, m);
 
          int size = m->Msg.DATA[4];
 
-         cia_402::requestDataBlock1(CANid);
+         canopen::requestDataBlock1(CANid);
          std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-         cia_402::processSingleSDO(CANid, m);
+         canopen::processSingleSDO(CANid, m);
 
 
          for (auto it : m->Msg.DATA)
@@ -950,10 +1160,10 @@ namespace cia_402{
          }
 
 
-         cia_402::requestDataBlock2(CANid);
+         canopen::requestDataBlock2(CANid);
          std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-         cia_402::processSingleSDO(CANid, m);
+         canopen::processSingleSDO(CANid, m);
 
 
          for (auto it : m->Msg.DATA)
@@ -969,17 +1179,17 @@ namespace cia_402{
     {
         std::vector<char> manufacturer_sw_version;
 
-        cia_402::sendSDO(CANid, cia_402::MANUFACTURERSOFTWAREVERSION);
+        canopen::sendSDO(CANid, cia_402::MANUFACTURERSOFTWAREVERSION);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-        cia_402::processSingleSDO(CANid, m);
+        canopen::processSingleSDO(CANid, m);
 
         int size = (uint8_t)m->Msg.DATA[4];
 
-        cia_402::requestDataBlock1(CANid);
+        canopen::requestDataBlock1(CANid);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-        cia_402::processSingleSDO(CANid, m);
+        canopen::processSingleSDO(CANid, m);
 
 
         for (auto it : m->Msg.DATA)
@@ -989,10 +1199,10 @@ namespace cia_402{
         }
 
 
-        cia_402::requestDataBlock2(CANid);
+        canopen::requestDataBlock2(CANid);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-        cia_402::processSingleSDO(CANid, m);
+        canopen::processSingleSDO(CANid, m);
 
 
         for (auto it : m->Msg.DATA)
@@ -1001,10 +1211,10 @@ namespace cia_402{
                 manufacturer_sw_version.push_back(it);
         }
 
-        cia_402::requestDataBlock1(CANid);
+        canopen::requestDataBlock1(CANid);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-        cia_402::processSingleSDO(CANid, m);
+        canopen::processSingleSDO(CANid, m);
 
 
         for (auto it : m->Msg.DATA)
@@ -1013,10 +1223,10 @@ namespace cia_402{
                 manufacturer_sw_version.push_back(it);
         }
 
-        cia_402::requestDataBlock2(CANid);
+        canopen::requestDataBlock2(CANid);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-        cia_402::processSingleSDO(CANid, m);
+        canopen::processSingleSDO(CANid, m);
 
 
         for (auto it : m->Msg.DATA)
@@ -1122,17 +1332,6 @@ void statusword_incoming(uint8_t CANid, BYTE data[8])
         devices[CANid].setSwitchON(switched_on);
 
         std::cout << "Motor State of Device with CANid " << (uint16_t)CANid << " is: " << devices[CANid].getMotorState() << std::endl;
-    }
-
-    void processSingleSDO(uint8_t CANid, TPCANRdMsg* message)
-    {
-        message->Msg.ID = 0x00;
-
-        while (message->Msg.ID != (0x580+CANid))
-        {
-            LINUX_CAN_Read(cia_402::h, message);
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
     }
 
 }

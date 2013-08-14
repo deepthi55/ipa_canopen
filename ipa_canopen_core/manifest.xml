@@ -10,7 +10,6 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/ipa_canopen_core</url>
 
-  <depend package="roscpp"/>
   <depend package="libpcan"/>
 
   <export>

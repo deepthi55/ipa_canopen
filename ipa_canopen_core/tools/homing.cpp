@@ -4,10 +4,10 @@
 
 // This program performs homing (referencing) of a device.
 // See the user manual for details:
-// https://github.com/ipa-tys/canopen/blob/master/doc/usermanual.pdf?raw=true
+// https://github.com/ipa-tys/cia_402/blob/master/doc/usermanual.pdf?raw=true
 
 #include <utility>
-#include "canopen.h"
+#include "cia_402.h"
 
 int main(int argc, char *argv[]) {
 
@@ -21,15 +21,15 @@ int main(int argc, char *argv[]) {
 	std::string deviceFile = std::string(argv[1]);
 	uint16_t CANid = std::stoi(std::string(argv[2]));
 
-  	// configure CANopen device objects and custom incoming and outgoing PDOs:
+    // configure cia_402 device objects and custom incoming and outgoing PDOs:
 
-	canopen::devices[ CANid ] = canopen::Device(CANid);
-	canopen::init(deviceFile, std::chrono::milliseconds(10));
+    cia_402::devices[ CANid ] = cia_402::Device(CANid);
+    cia_402::init(deviceFile, std::chrono::milliseconds(100));
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
   
-	canopen::sendSDO(CANid, canopen::MODES_OF_OPERATION, canopen::MODES_OF_OPERATION_HOMING_MODE);
+    canopen::sendSDO(CANid, cia_402::MODES_OF_OPERATION, cia_402::MODES_OF_OPERATION_HOMING_MODE);
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	canopen::sendSDO(CANid, canopen::CONTROLWORD, (uint16_t) (canopen::CONTROLWORD_ENABLE_OPERATION | canopen::CONTROLWORD_START_HOMING));
+    canopen::sendSDO(CANid, cia_402::CONTROLWORD, (uint16_t) (cia_402::CONTROLWORD_ENABLE_OPERATION | cia_402::CONTROLWORD_START_HOMING));
 	std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	std::cout << "Homing complete" << std::endl;
 }

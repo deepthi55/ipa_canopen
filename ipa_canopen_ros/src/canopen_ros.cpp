@@ -70,7 +70,7 @@
 #include <map>
 #include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
-#include <canopen.h>
+#include <cia_402.h>
 #include <XmlRpcValue.h>
 #include <JointLimits.h>
 
@@ -95,23 +95,23 @@ std::vector<std::string> jointNames;
 bool CANopenInit(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &res, std::string chainName)
 {
 
-    canopen::init(deviceFile, canopen::syncInterval);
+    cia_402::init(deviceFile, canopen::syncInterval);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 
-    for (auto device : canopen::devices)
+    for (auto device : cia_402::devices)
     {
 
-        canopen::sendSDO(device.second.getCANid(), canopen::MODES_OF_OPERATION, canopen::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE);
+        canopen::sendSDO(device.second.getCANid(), cia_402::MODES_OF_OPERATION, cia_402::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE);
         std::cout << "Setting IP mode for: " << (uint16_t)device.second.getCANid() << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    canopen::initDeviceManagerThread(canopen::deviceManager);
+    cia_402::initDeviceManagerThread(cia_402::deviceManager);
 
-    for (auto device : canopen::devices)
+    for (auto device : cia_402::devices)
     {
         device.second.setInitialized(true);
        // if(device.second.getHomingError())
@@ -131,26 +131,26 @@ bool CANopenRecover(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response
 
 
 
-    canopen::recover(deviceFile, canopen::syncInterval);
+    cia_402::recover(deviceFile, canopen::syncInterval);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 
-    for (auto device : canopen::devices)
+    for (auto device : cia_402::devices)
     {
-        canopen::sendSDO(device.second.getCANid(), canopen::MODES_OF_OPERATION, canopen::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE);
+        canopen::sendSDO(device.second.getCANid(), cia_402::MODES_OF_OPERATION, cia_402::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE);
         std::cout << "Setting IP mode for: " << (uint16_t)device.second.getCANid() << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     }
     //canopen::initDeviceManagerThread(canopen::deviceManager);
 
-    for (auto device : canopen::devices)
+    for (auto device : cia_402::devices)
     {
-        canopen::devices[device.second.getCANid()].setDesiredPos((double)device.second.getActualPos());
-        canopen::devices[device.second.getCANid()].setDesiredVel(0);
+        cia_402::devices[device.second.getCANid()].setDesiredPos((double)device.second.getActualPos());
+        cia_402::devices[device.second.getCANid()].setDesiredVel(0);
 
-        canopen::sendPos((uint16_t)device.second.getCANid(), (double)device.second.getDesiredPos());
-        canopen::sendPos((uint16_t)device.second.getCANid(), (double)device.second.getDesiredPos());
+        cia_402::sendPos((uint16_t)device.second.getCANid(), (double)device.second.getDesiredPos());
+        cia_402::sendPos((uint16_t)device.second.getCANid(), (double)device.second.getDesiredPos());
 
         device.second.setInitialized(true);
     }
@@ -169,7 +169,7 @@ bool setOperationModeCallback(cob_srvs::SetOperationMode::Request &req, cob_srvs
 
 void setVel(const brics_actuator::JointVelocities &msg, std::string chainName)
 {
-    if (!canopen::atFirstInit & !canopen::recover_active)
+    if (!cia_402::atFirstInit & !canopen::recover_active)
     {
         std::vector<double> velocities;
         std::vector<double> positions;
@@ -180,7 +180,7 @@ void setVel(const brics_actuator::JointVelocities &msg, std::string chainName)
             velocities.push_back( it.value);
         }
 
-        for (auto device : canopen::devices)
+        for (auto device : cia_402::devices)
         {
             positions.push_back((double)device.second.getDesiredPos());
         }
@@ -188,7 +188,7 @@ void setVel(const brics_actuator::JointVelocities &msg, std::string chainName)
         joint_limits_->checkVelocityLimits(velocities);
         joint_limits_->checkPositionLimits(velocities, positions);
 
-        canopen::deviceGroups[chainName].setVel(velocities);
+        cia_402::deviceGroups[chainName].setVel(velocities);
     }
 }
 
@@ -239,9 +239,9 @@ void readParamsFromParameterServer(ros::NodeHandle n)
             devices.push_back(static_cast<std::string>(devices_XMLRPC[i]));
 
         for (unsigned int i=0; i<jointNames.size(); i++)
-            canopen::devices[ moduleIDs[i] ] = canopen::Device(moduleIDs[i], jointNames[i], chainName, devices[i]);
+            cia_402::devices[ moduleIDs[i] ] = cia_402::Device(moduleIDs[i], jointNames[i], chainName, devices[i]);
 
-        canopen::deviceGroups[ chainName ] = canopen::DeviceGroup(moduleIDs, jointNames);
+        cia_402::deviceGroups[ chainName ] = cia_402::DeviceGroup(moduleIDs, jointNames);
 
     }
 
@@ -362,15 +362,15 @@ int main(int argc, char **argv)
         std::cout << "Connection to CAN bus established" << std::endl;
     }
 
-    canopen::pre_init();
+    cia_402::pre_init();
 
     /********************************************/
 
     // add custom PDOs:
-    canopen::sendPos = canopen::defaultPDOOutgoing;
-    for (auto it : canopen::devices) {
-        canopen::incomingPDOHandlers[ 0x180 + it.first ] = [it](const TPCANRdMsg m) { canopen::defaultPDO_incoming( it.first, m ); };
-        canopen::incomingEMCYHandlers[ 0x081 + it.first ] = [it](const TPCANRdMsg mE) { canopen::defaultEMCY_incoming( it.first, mE ); };
+    cia_402::sendPos = cia_402::defaultPDOOutgoing;
+    for (auto it : cia_402::devices) {
+        cia_402::incomingPDOHandlers[ 0x180 + it.first ] = [it](const TPCANRdMsg m) { cia_402::defaultPDO_incoming( it.first, m ); };
+        cia_402::incomingEMCYHandlers[ 0x081 + it.first ] = [it](const TPCANRdMsg mE) { cia_402::defaultEMCY_incoming( it.first, mE ); };
     }
 
     // set up services, subscribers, and publishers for each of the chains:
@@ -388,7 +388,7 @@ int main(int argc, char **argv)
     ros::Publisher jointStatesPublisher = n.advertise<sensor_msgs::JointState>("/joint_states", 1);
     ros::Publisher diagnosticsPublisher = n.advertise<diagnostic_msgs::DiagnosticArray>("/diagnostics", 1);
 
-    for (auto it : canopen::deviceGroups)
+    for (auto it : cia_402::deviceGroups)
     {
         ROS_INFO("Configuring %s", it.first.c_str());
 
@@ -417,7 +417,7 @@ int main(int argc, char **argv)
     {
 
     // iterate over all chains, get current pos and vel and publish as topics:
-        for (auto dg : (canopen::deviceGroups))
+        for (auto dg : (cia_402::deviceGroups))
         {
             sensor_msgs::JointState js;
             js.name = dg.second.getNames();
@@ -449,7 +449,7 @@ int main(int argc, char **argv)
         std::vector<diagnostic_msgs::KeyValue> keyvalues;
 
         // check for emergency stop status
-       /* for (auto device : canopen::devices)
+       /* for (auto device : cia_402::devices)
         {
             if (device.second.getEMCYpressed())
             {
@@ -464,7 +464,7 @@ int main(int argc, char **argv)
 
         diagnostics.status.resize(1);
 
-    for (auto dg : (canopen::devices))
+    for (auto dg : (cia_402::devices))
     {
         std::string name = dg.second.getName();
         //ROS_INFO("Name %s", name.c_str() );
