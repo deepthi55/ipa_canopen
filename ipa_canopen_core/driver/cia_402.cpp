@@ -61,6 +61,12 @@
 #include "schunkErrors.h"
 #include "canopen.h"
 
+/***************************************************************/
+//          IMPLEMENTATION:
+//		    Namespace for the CAN in automation standard
+//          CIA 402 - Drives and Motion Control
+/***************************************************************/
+
 namespace cia_402
 {
 

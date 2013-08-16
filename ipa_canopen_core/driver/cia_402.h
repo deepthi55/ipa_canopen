@@ -77,6 +77,11 @@
 #include <inttypes.h>
 #include <canopen.h>
 
+
+/***************************************************************/
+//		    Namespace for the CAN in automation standard
+//          CIA 402 - Drives and Motion Control
+/***************************************************************/
 namespace cia_402
 {
     /***************************************************************/
