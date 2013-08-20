@@ -64,17 +64,15 @@ namespace canopen
     /***************************************************************/
     //			define global variables and functions
 
-    HANDLE h;
+    std::map<std::string, HANDLE> h;
 
     bool recover_active;
-    std::chrono::milliseconds syncInterval;
 
-
-    bool openConnection(std::string devName){
-        canopen::h = LINUX_CAN_Open(devName.c_str(), O_RDWR);
-        if (!canopen::h)
+    bool openConnection(std::string devFile){
+        h[devFile] = LINUX_CAN_Open(devFile.c_str(), O_RDWR);
+        if (!h[devFile])
             return false;
-        errno = CAN_Init(canopen::h, CAN_BAUD_500K, CAN_INIT_TYPE_ST);
+        errno = CAN_Init(h[devFile], CAN_BAUD_500K, CAN_INIT_TYPE_ST);
         return true;
     }
 
@@ -95,7 +93,7 @@ namespace canopen
     //		define SDO protocol functions
     /***************************************************************/
 
-    void requestDataBlock1(uint8_t CANid){
+    void requestDataBlock1(uint8_t CANid, std::string devFile){
         TPCANMsg msg;
         msg.ID = CANid + 0x600;
         msg.MSGTYPE = 0x00;
@@ -108,10 +106,10 @@ namespace canopen
         msg.DATA[5] = 0x00;
         msg.DATA[6] = 0x00;
         msg.DATA[7] = 0x00;
-        CAN_Write(canopen::h, &msg);
+        CAN_Write(h[devFile], &msg);
     }
 
-    void requestDataBlock2(uint8_t CANid){
+    void requestDataBlock2(uint8_t CANid, std::string devFile){
         TPCANMsg msg;
         msg.ID = CANid + 0x600;
         msg.MSGTYPE = 0x00;
@@ -124,10 +122,10 @@ namespace canopen
         msg.DATA[5] = 0x00;
         msg.DATA[6] = 0x00;
         msg.DATA[7] = 0x00;
-        CAN_Write(canopen::h, &msg);
+        CAN_Write(h[devFile], &msg);
     }
 
-    void sendSDO(uint8_t CANid, SDOkey sdo){
+    void sendSDO(uint8_t CANid, SDOkey sdo, std::string devFile){
         TPCANMsg msg;
         msg.ID = CANid + 0x600;
         msg.MSGTYPE = 0x00;
@@ -140,10 +138,10 @@ namespace canopen
         msg.DATA[5] = 0x00;
         msg.DATA[6] = 0x00;
         msg.DATA[7] = 0x00;
-        CAN_Write(canopen::h, &msg);
+        CAN_Write(h[devFile], &msg);
     }
 
-    void sendSDO(uint8_t CANid, SDOkey sdo, uint32_t value){
+    void sendSDO(uint8_t CANid, SDOkey sdo, uint32_t value, std::string devFile){
         TPCANMsg msg;
         msg.ID = CANid + 0x600;
         msg.LEN = 8;
@@ -155,10 +153,10 @@ namespace canopen
         msg.DATA[5] = (value >> 8) & 0xFF;
         msg.DATA[6] = (value >> 16) & 0xFF;
         msg.DATA[7] = (value >> 24) & 0xFF;
-        CAN_Write(canopen::h, &msg);
+        CAN_Write(h[devFile], &msg);
     }
 
-    void sendSDO(uint8_t CANid, SDOkey sdo, int32_t value){
+    void sendSDO(uint8_t CANid, SDOkey sdo, int32_t value, std::string devFile){
         TPCANMsg msg;
         msg.ID = CANid + 0x600;
         msg.LEN = 8;
@@ -170,10 +168,10 @@ namespace canopen
         msg.DATA[5] = (value >> 8) & 0xFF;
         msg.DATA[6] = (value >> 16) & 0xFF;
         msg.DATA[7] = (value >> 24) & 0xFF;
-        CAN_Write(canopen::h, &msg);
+        CAN_Write(h[devFile], &msg);
     }
 
-    void sendSDO(uint8_t CANid, SDOkey sdo, uint8_t value){
+    void sendSDO(uint8_t CANid, SDOkey sdo, uint8_t value, std::string devFile){
         TPCANMsg msg;
         msg.ID = CANid + 0x600;
         msg.LEN = 8;
@@ -185,12 +183,12 @@ namespace canopen
         msg.DATA[5] = 0x00;
         msg.DATA[6] = 0x00;
         msg.DATA[7] = 0x00;
-        CAN_Write(canopen::h, &msg);
+        CAN_Write(h[devFile], &msg);
 
 
     }
 
-    void sendSDO(uint8_t CANid, SDOkey sdo, uint16_t value){
+    void sendSDO(uint8_t CANid, SDOkey sdo, uint16_t value, std::string devFile){
         TPCANMsg msg;
         msg.ID = CANid + 0x600;
         msg.LEN = 8;
@@ -202,16 +200,16 @@ namespace canopen
         msg.DATA[5] = (value >> 8) & 0xFF;
         msg.DATA[6] = 0x00;
         msg.DATA[7] = 0x00;
-        CAN_Write(canopen::h, &msg);
+        CAN_Write(h[devFile], &msg);
     }
 
-    void processSingleSDO(uint8_t CANid, TPCANRdMsg* message)
+    void processSingleSDO(uint8_t CANid, TPCANRdMsg* message, std::string devFile)
     {
         message->Msg.ID = 0x00;
 
         while (message->Msg.ID != (0x580+CANid))
         {
-            LINUX_CAN_Read(canopen::h, message);
+            LINUX_CAN_Read(h[devFile], message);
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }

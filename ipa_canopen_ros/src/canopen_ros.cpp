@@ -74,491 +74,137 @@
 #include <XmlRpcValue.h>
 #include <JointLimits.h>
 
-typedef boost::function<bool(cob_srvs::Trigger::Request&, cob_srvs::Trigger::Response&)> TriggerType;
-typedef boost::function<void(const brics_actuator::JointVelocities&)> JointVelocitiesType;
-typedef boost::function<bool(cob_srvs::SetOperationMode::Request&, cob_srvs::SetOperationMode::Response&)> SetOperationModeCallbackType;
-
-struct BusParams
-{
-    std::string baudrate;
-    uint32_t syncInterval;
-};
-
-std::map<std::string, BusParams> buses;
-
 std::string deviceFile;
 
-JointLimits* joint_limits_;
+std::map<std::string, JointLimits> joint_limits_;
+
 std::vector<std::string> chainNames;
 std::vector<std::string> jointNames;
 
-bool CANopenInit(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &res, std::string chainName)
-{
-
-    cia_402::init(deviceFile, canopen::syncInterval);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-
-    for (auto device : cia_402::devices)
-    {
-
-        canopen::sendSDO(device.second.getCANid(), cia_402::MODES_OF_OPERATION, cia_402::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE);
-        std::cout << "Setting IP mode for: " << (uint16_t)device.second.getCANid() << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-    cia_402::initDeviceManagerThread(cia_402::deviceManager);
-
-    for (auto device : cia_402::devices)
-    {
-        device.second.setInitialized(true);
-       // if(device.second.getHomingError())
-         //   return false;
-
-    }
-
-    res.success.data = true;
-    res.error_message.data = "";
-
-    return true;
-}
-
-
-bool CANopenRecover(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &res, std::string chainName)
-{
-
-
-
-    cia_402::recover(deviceFile, canopen::syncInterval);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-
-    for (auto device : cia_402::devices)
-    {
-        canopen::sendSDO(device.second.getCANid(), cia_402::MODES_OF_OPERATION, cia_402::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE);
-        std::cout << "Setting IP mode for: " << (uint16_t)device.second.getCANid() << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-    }
-    //canopen::initDeviceManagerThread(canopen::deviceManager);
-
-    for (auto device : cia_402::devices)
-    {
-        cia_402::devices[device.second.getCANid()].setDesiredPos((double)device.second.getActualPos());
-        cia_402::devices[device.second.getCANid()].setDesiredVel(0);
-
-        cia_402::sendPos((uint16_t)device.second.getCANid(), (double)device.second.getDesiredPos());
-        cia_402::sendPos((uint16_t)device.second.getCANid(), (double)device.second.getDesiredPos());
-
-        device.second.setInitialized(true);
-    }
-
-    res.success.data = true;
-    res.error_message.data = "";
-    return true;
-}
-
-
-bool setOperationModeCallback(cob_srvs::SetOperationMode::Request &req, cob_srvs::SetOperationMode::Response &res, std::string chainName)
-{
-    res.success.data = true;  // for now this service is just a dummy, not used elsewhere
-    return true;
-}
-
-void setVel(const brics_actuator::JointVelocities &msg, std::string chainName)
-{
-    if (!cia_402::atFirstInit & !canopen::recover_active)
-    {
-        std::vector<double> velocities;
-        std::vector<double> positions;
-
-
-        for (auto it : msg.velocities)
-        {
-            velocities.push_back( it.value);
-        }
-
-        for (auto device : cia_402::devices)
-        {
-            positions.push_back((double)device.second.getDesiredPos());
-        }
-
-        joint_limits_->checkVelocityLimits(velocities);
-        joint_limits_->checkPositionLimits(velocities, positions);
-
-        cia_402::deviceGroups[chainName].setVel(velocities);
-    }
-}
-
+/***************************************************************/
+//			Read parameters from the yaml files for configuring
+//          the canopen node
+/***************************************************************/
 void readParamsFromParameterServer(ros::NodeHandle n)
 {
-    XmlRpc::XmlRpcValue busParams;
 
-    if (!n.hasParam("devices") || !n.hasParam("chains"))
+    if (!n.hasParam("device_groups") || !n.hasParam("chains"))
     {
         ROS_ERROR("Missing parameters on parameter server; shutting down node.");
         ROS_ERROR("Please consult the user manual for necessary parameter settings.");
         n.shutdown();
     }
 
-    n.getParam("devices", busParams);
-    for (int i=0; i<busParams.size(); i++)
-    {
-        BusParams busParam;
-        auto name = static_cast<std::string>(busParams[i]["name"]);
-        busParam.baudrate = static_cast<std::string>(busParams[i]["baudrate"]);
-        busParam.syncInterval = static_cast<int>(busParams[i]["sync_interval"]);
-        buses[name] = busParam;
-    }
+    // Reading the DeviceGroups from the canopenmaster configuration
+    XmlRpc::XmlRpcValue busParams;
+    n.getParam("device_groups", busParams);
 
     XmlRpc::XmlRpcValue chainNames_XMLRPC;
     n.getParam("chains", chainNames_XMLRPC);
 
-    for (int i=0; i<chainNames_XMLRPC.size(); i++)
-        chainNames.push_back(static_cast<std::string>(chainNames_XMLRPC[i]));
+    for (int i=0; i<busParams.size(); i++)
+    {
 
-    for (auto chainName : chainNames) {
+        auto name = static_cast<std::string>(busParams[i]["name"]);
+        cia_402::deviceGroups[name] = cia_402::DeviceGroup();
+        cia_402::deviceGroups[name].setBaudRate(static_cast<std::string>(busParams[i]["baudrate"]));
+        cia_402::deviceGroups[name].setSyncInterval(static_cast<int>(busParams[i]["sync_interval"]));
+        cia_402::deviceGroups[name].setDeviceFile(static_cast<std::string>(busParams[i]["device_file"]));
+        // Reading the chains from the canopenmaster configuration
+        chainNames.push_back(static_cast<std::string>(chainNames_XMLRPC[i]));
+        std::cout << chainNames[i] << std::endl;
+    }
+
+    // Looping through the chains to get specific information according to the individual
+    // yaml file. p.ex: arm_controller (joint_names, module_ids, ...)
+
+    for (int cN=0; cN<chainNames_XMLRPC.size(); cN++)
+    {
+
+        std::map<uint8_t, canopen::Device> devs;
+        jointNames.clear();
         XmlRpc::XmlRpcValue jointNames_XMLRPC;
-        n.getParam("/" + chainName + "/joint_names", jointNames_XMLRPC);
+        n.getParam("/" + chainNames[cN] + "/joint_names", jointNames_XMLRPC);
 
         for (int i=0; i<jointNames_XMLRPC.size(); i++)
+        {
             jointNames.push_back(static_cast<std::string>(jointNames_XMLRPC[i]));
+            std::cout << jointNames_XMLRPC[i] << std::endl;
+        }
+
+
 
         XmlRpc::XmlRpcValue moduleIDs_XMLRPC;
-        n.getParam("/" + chainName + "/module_ids", moduleIDs_XMLRPC);
+        n.getParam("/" + chainNames[cN] + "/module_ids", moduleIDs_XMLRPC);
         std::vector<uint8_t> moduleIDs;
         for (int i=0; i<moduleIDs_XMLRPC.size(); i++)
+        {
             moduleIDs.push_back(static_cast<int>(moduleIDs_XMLRPC[i]));
+            std::cout << moduleIDs_XMLRPC[i] << std::endl;
+        }
 
         XmlRpc::XmlRpcValue devices_XMLRPC;
-        n.getParam("/" + chainName + "/devices", devices_XMLRPC);
+        n.getParam("/" + chainNames[cN] + "/devices", devices_XMLRPC);
         std::vector<std::string> devices;
         for (int i=0; i<devices_XMLRPC.size(); i++)
+        {
             devices.push_back(static_cast<std::string>(devices_XMLRPC[i]));
+            std::cout << devices_XMLRPC[i] << std::endl;
+        }
+
+
+        XmlRpc::XmlRpcValue device_files_XMLRPC;
+        n.getParam("/" + chainNames[cN] + "/device_files", device_files_XMLRPC);
+        std::vector<std::string> device_files;
+        for (int i=0; i<device_files_XMLRPC.size(); i++)
+        {
+            device_files.push_back(static_cast<std::string>(device_files_XMLRPC[i]));
+            std::cout << device_files_XMLRPC[i] << std::endl;
+        }
+
+
+        std::map<uint8_t, cia_402::Device> dev_vec;
 
         for (unsigned int i=0; i<jointNames.size(); i++)
-            cia_402::devices[ moduleIDs[i] ] = cia_402::Device(moduleIDs[i], jointNames[i], chainName, devices[i]);
-
-        cia_402::deviceGroups[ chainName ] = cia_402::DeviceGroup(moduleIDs, jointNames);
+        {
+            dev_vec [moduleIDs[i]] = cia_402::Device(moduleIDs[i], jointNames[i], chainNames[cN], devices[i]);
+            std::cout << moduleIDs[i]<<  jointNames[i]<< chainNames[cN]<< devices[i] << std::endl;
+        }
+        auto name = static_cast<std::string>(busParams[cN]["name"]);
+        cia_402::deviceGroups[name].setDevices(dev_vec);
 
     }
 
 }
 
-void setJointConstraints(ros::NodeHandle n)
-{
-    /******************************************
-     *
-     *
-     *
-     */
-
-    /// Get robot_description from ROS parameter server
-      joint_limits_ = new JointLimits();
-      int DOF = jointNames.size();
-
-      std::string param_name = "/robot_description";
-      std::string full_param_name;
-      std::string xml_string;
-
-      n.searchParam(param_name, full_param_name);
-      if (n.hasParam(full_param_name))
-      {
-          n.getParam(full_param_name.c_str(), xml_string);
-      }
-
-      else
-      {
-          ROS_ERROR("Parameter %s not set, shutting down node...", full_param_name.c_str());
-          n.shutdown();
-      }
-
-      if (xml_string.size() == 0)
-      {
-          ROS_ERROR("Unable to load robot model from parameter %s",full_param_name.c_str());
-          n.shutdown();
-      }
-      ROS_INFO("%s content\n%s", full_param_name.c_str(), xml_string.c_str());
-
-      /// Get urdf model out of robot_description
-      urdf::Model model;
-
-      if (!model.initString(xml_string))
-      {
-          ROS_ERROR("Failed to parse urdf file");
-          n.shutdown();
-      }
-      ROS_INFO("Successfully parsed urdf file");
-
-      /// Get max velocities out of urdf model
-      std::vector<double> MaxVelocities(DOF);
-      for (int i = 0; i < DOF; i++)
-      {
-          MaxVelocities[i] = model.getJoint(jointNames[i].c_str())->limits->velocity;
-      }
-
-      /// Get lower limits out of urdf model
-      std::vector<double> LowerLimits(DOF);
-      for (int i = 0; i < DOF; i++)
-      {
-          LowerLimits[i] = model.getJoint(jointNames[i].c_str())->limits->lower;
-      }
-
-      // Get upper limits out of urdf model
-      std::vector<double> UpperLimits(DOF);
-      for (int i = 0; i < DOF; i++)
-      {
-          UpperLimits[i] = model.getJoint(jointNames[i].c_str())->limits->upper;
-      }
-
-      /// Get offsets out of urdf model
-      std::vector<double> Offsets(DOF);
-      for (int i = 0; i < DOF; i++)
-      {
-          Offsets[i] = model.getJoint(jointNames[i].c_str())->calibration->rising.get()[0];
-      }
-
-      /// Set parameters
-
-      joint_limits_->setDOF(DOF);
-      joint_limits_->setUpperLimits(UpperLimits);
-      joint_limits_->setLowerLimits(LowerLimits);
-      joint_limits_->setMaxVelocities(MaxVelocities);
-      joint_limits_->setOffsets(Offsets);
-
-     /********************************************
-     *
-     *
-     ********************************************/
-}
 
 
 int main(int argc, char **argv)
 {
-    // todo: allow identical module IDs of modules when they are on different CAN buses
-
 
     ros::init(argc, argv, "canopen_ros");
     ros::NodeHandle n(""); // ("~");
 
     readParamsFromParameterServer(n);
 
-    std::cout << "Sync Interval" << buses.begin()->second.syncInterval << std::endl;
-    canopen::syncInterval = std::chrono::milliseconds( buses.begin()->second.syncInterval );
-    // ^ todo: this only works with a single CAN bus; add support for more buses!
-    deviceFile = buses.begin()->first;
-    std::cout << "Opening device..." << deviceFile << std::endl;
-    // ^ todo: this only works with a single CAN bus; add support for more buses!
-
-    if (!canopen::openConnection(deviceFile))
+    for (auto dg : cia_402::deviceGroups)
     {
-        ROS_ERROR("Cannot open CAN device; aborting.");
-        exit(EXIT_FAILURE);
-    }
-    else
-    {
-        std::cout << "Connection to CAN bus established" << std::endl;
-    }
+        std::string deviceFile = dg.second.getDeviceFile();
 
-    cia_402::pre_init();
+        std::cout << deviceFile << std::endl;
 
-    /********************************************/
-
-    // add custom PDOs:
-    cia_402::sendPos = cia_402::defaultPDOOutgoing;
-    for (auto it : cia_402::devices) {
-        cia_402::incomingPDOHandlers[ 0x180 + it.first ] = [it](const TPCANRdMsg m) { cia_402::defaultPDO_incoming( it.first, m ); };
-        cia_402::incomingEMCYHandlers[ 0x081 + it.first ] = [it](const TPCANRdMsg mE) { cia_402::defaultEMCY_incoming( it.first, mE ); };
-    }
-
-    // set up services, subscribers, and publishers for each of the chains:
-    std::vector<TriggerType> initCallbacks;
-    std::vector<ros::ServiceServer> initServices;
-    std::vector<TriggerType> recoverCallbacks;
-    std::vector<ros::ServiceServer> recoverServices;
-    std::vector<SetOperationModeCallbackType> setOperationModeCallbacks;
-    std::vector<ros::ServiceServer> setOperationModeServices;
-
-    std::vector<JointVelocitiesType> jointVelocitiesCallbacks;
-    std::vector<ros::Subscriber> jointVelocitiesSubscribers;
-    std::map<std::string, ros::Publisher> currentOperationModePublishers;
-    std::map<std::string, ros::Publisher> statePublishers;
-    ros::Publisher jointStatesPublisher = n.advertise<sensor_msgs::JointState>("/joint_states", 1);
-    ros::Publisher diagnosticsPublisher = n.advertise<diagnostic_msgs::DiagnosticArray>("/diagnostics", 1);
-
-    for (auto it : cia_402::deviceGroups)
-    {
-        ROS_INFO("Configuring %s", it.first.c_str());
-
-        initCallbacks.push_back( boost::bind(CANopenInit, _1, _2, it.first) );
-        initServices.push_back( n.advertiseService("/" + it.first + "/init", initCallbacks.back()) );
-        recoverCallbacks.push_back( boost::bind(CANopenRecover, _1, _2, it.first) );
-        recoverServices.push_back( n.advertiseService("/" + it.first + "/recover", recoverCallbacks.back()) );
-        setOperationModeCallbacks.push_back( boost::bind(setOperationModeCallback, _1, _2, it.first) );
-        setOperationModeServices.push_back( n.advertiseService("/" + it.first + "/set_operation_mode", setOperationModeCallbacks.back()) );
-
-        jointVelocitiesCallbacks.push_back( boost::bind(setVel, _1, it.first) );
-        jointVelocitiesSubscribers.push_back( n.subscribe<brics_actuator::JointVelocities>("/" + it.first + "/command_vel", 1, jointVelocitiesCallbacks.back()) );
-
-        currentOperationModePublishers[it.first] = n.advertise<std_msgs::String>("/" + it.first + "/current_operationmode", 1);
-
-        statePublishers[it.first] = n.advertise<pr2_controllers_msgs::JointTrajectoryControllerState>("/" + it.first + "/state", 1);
-    }
-
-    double lr = 1000.0 / std::chrono::duration_cast<std::chrono::milliseconds>(canopen::syncInterval).count();
-
-    ros::Rate loop_rate(lr);
-
-    setJointConstraints(n);
-
-    while (ros::ok())
-    {
-
-    // iterate over all chains, get current pos and vel and publish as topics:
-        for (auto dg : (cia_402::deviceGroups))
+        if (!canopen::openConnection(deviceFile))
         {
-            sensor_msgs::JointState js;
-            js.name = dg.second.getNames();
-            js.header.stamp = ros::Time::now(); // todo: possibly better use timestamp of hardware msg?
-            js.position = dg.second.getActualPos();
-            js.velocity = dg.second.getActualVel();
-            js.effort = std::vector<double>(dg.second.getNames().size(), 0.0);
-            jointStatesPublisher.publish(js);
-
-            pr2_controllers_msgs::JointTrajectoryControllerState jtcs;
-            jtcs.header.stamp = js.header.stamp;
-            jtcs.actual.positions = js.position;
-            jtcs.actual.velocities = js.velocity;
-            jtcs.desired.positions = dg.second.getDesiredPos();
-            jtcs.desired.velocities = dg.second.getDesiredVel();
-            statePublishers[dg.first].publish(jtcs);
-
-            std_msgs::String opmode;
-            opmode.data = "velocity";
-            currentOperationModePublishers[dg.first].publish(opmode);
-        }
-
-        // publishing diagnostic messages
-        diagnostic_msgs::DiagnosticArray diagnostics;
-        diagnostic_msgs::DiagnosticStatus diagstatus;
-        std::vector<diagnostic_msgs::DiagnosticStatus> diagstatus_msg;
-        diagnostic_msgs::KeyValue keyval;
-
-        std::vector<diagnostic_msgs::KeyValue> keyvalues;
-
-        // check for emergency stop status
-       /* for (auto device : cia_402::devices)
-        {
-            if (device.second.getEMCYpressed())
-            {
-            ROS_WARN("Emergency button pressed. Device with CANid %d disabled", device.second.getCANid());
-            }
-            else if (device.second.getEMCYreleased())
-            {
-            ROS_INFO("Emergency button released. Device with CANid %d enabled", device.second.getCANid());
-            }
-        } 
-*/
-
-        diagnostics.status.resize(1);
-
-    for (auto dg : (cia_402::devices))
-    {
-        std::string name = dg.second.getName();
-        //ROS_INFO("Name %s", name.c_str() );
-
-        keyval.key = "Node ID";
-        uint16_t node_id = dg.second.getCANid();
-        std::stringstream result;
-        result << node_id;
-        keyval.value = result.str().c_str();
-        keyvalues.push_back(keyval);
-
-        keyval.key = "Hardware Version";
-        std::vector<char> manhw = dg.second.getManufacturerHWVersion();
-        keyval.value = std::string(manhw.begin(), manhw.end());
-        keyvalues.push_back(keyval);
-
-        keyval.key = "Software Version";
-        std::vector<char> mansw = dg.second.getManufacturerSWVersion();
-        keyval.value = std::string(mansw.begin(), mansw.end());
-        keyvalues.push_back(keyval);
-
-        keyval.key = "Device Name";
-        std::vector<char> dev_name = dg.second.getManufacturerDevName();
-        keyval.value = std::string(dev_name.begin(), dev_name.end());
-        keyvalues.push_back(keyval);
-
-        keyval.key = "Vendor ID";
-        std::vector<uint16_t> vendor_id = dg.second.getVendorID();
-        std::stringstream result1;
-        for (auto it : vendor_id)
-        {
-           result1 <<  std::hex << it;
-        }
-        keyval.value = result1.str().c_str();
-        keyvalues.push_back(keyval);
-
-        keyval.key = "Revision Number";
-        uint16_t rev_number = dg.second.getRevNumber();
-        std::stringstream result2;
-        result2 << rev_number;
-        keyval.value = result2.str().c_str();
-        keyvalues.push_back(keyval);
-
-        keyval.key = "Product Code";
-        std::vector<uint16_t> prod_code = dg.second.getProdCode();
-        std::stringstream result3;
-        std::copy(prod_code.begin(), prod_code.end(), std::ostream_iterator<uint16_t>(result3, " "));
-        keyval.value = result3.str().c_str();
-        keyvalues.push_back(keyval);
-
-        bool error_ = dg.second.getFault();
-        bool initialized_ = dg.second.getInitialized();
-
-        //ROS_INFO("Fault: %d", error_);
-        //ROS_INFO("Referenced: %d", initialized_);
-
-        // set data to diagnostics
-        if(error_)
-        {
-          diagstatus.level = 2;
-          diagstatus.name = chainNames[0];
-          diagstatus.message = "Fault occured.";
-          diagstatus.values = keyvalues;
-          break;
+               ROS_ERROR("Cannot open CAN device; aborting.");
+               exit(EXIT_FAILURE);
         }
         else
         {
-          if (initialized_)
-          {
-            diagstatus.level = 0;
-            diagstatus.name = chainNames[0];
-            diagstatus.message = "lwa4p chain initialized and running";
-            diagstatus.values = keyvalues;
-          }
-          else
-          {
-            diagstatus.level = 1;
-            diagstatus.name = chainNames[0];
-            diagstatus.message = "lwa4p chain not initialized";
-            diagstatus.values = keyvalues;
-            break;
-          }
+               std::cout << "Connection to CAN bus established" << std::endl;
         }
-    }
-        diagstatus_msg.push_back(diagstatus);
-        // publish diagnostic message
-        diagnostics.status = diagstatus_msg;
-        diagnostics.header.stamp = ros::Time::now();
-        diagnosticsPublisher.publish(diagnostics);
 
-        ros::spinOnce();
-        loop_rate.sleep();
+
+        cia_402::pre_init(dg.second);
     }
 
-    return 0;
 }
-

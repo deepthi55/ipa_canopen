@@ -75,6 +75,7 @@
 #include <fcntl.h>    // for O_RDWR
 #include <stdint.h>
 #include <inttypes.h>
+#include<algorithm>
 
 namespace canopen
 {
@@ -104,13 +105,13 @@ namespace canopen
     };
 
     extern std::chrono::milliseconds syncInterval;
-    extern HANDLE h;
+    extern std::map<std::string, HANDLE> h;
     extern std::map<SDOkey, std::function<void (uint8_t CANid, BYTE data[8])> > incomingDataHandlers;
     extern std::map<uint16_t, std::function<void (const TPCANRdMsg m)> > incomingPDOHandlers;
     extern std::map<uint16_t, std::function<void (const TPCANRdMsg m)> > incomingEMCYHandlers;
     extern bool recover_active;
 
-    bool openConnection(std::string devName);
+    bool openConnection(std::string devFile);
 
     inline bool operator<(const SDOkey &a, const SDOkey &b) {
             return a.index < b.index || (a.index == b.index && a.subindex < b.subindex);
@@ -119,15 +120,15 @@ namespace canopen
     /***********************************************************************/
     // SDO specific functions
     /***********************************************************************/
-    void processSingleSDO(uint8_t CANid, TPCANRdMsg* message);
-    void requestDataBlock1(uint8_t CANid);
-    void requestDataBlock2(uint8_t CANid);
+    void processSingleSDO(uint8_t CANid, TPCANRdMsg* message, std::string devFile);
+    void requestDataBlock1(uint8_t CANid, std::string devFile);
+    void requestDataBlock2(uint8_t CANid, std::string devFile);
 
-    void sendSDO(uint8_t CANid, SDOkey sdo);
-    void sendSDO(uint8_t CANid, SDOkey sdo, uint32_t value);
-    void sendSDO(uint8_t CANid, SDOkey sdo, int32_t value);
-    void sendSDO(uint8_t CANid, SDOkey sdo, uint16_t value);
-    void sendSDO(uint8_t CANid, SDOkey sdo, uint8_t value);
+    void sendSDO(uint8_t CANid, SDOkey sdo, std::string devFile);
+    void sendSDO(uint8_t CANid, SDOkey sdo, uint32_t value,std::string devFile);
+    void sendSDO(uint8_t CANid, SDOkey sdo, int32_t value, std::string devFile);
+    void sendSDO(uint8_t CANid, SDOkey sdo, uint16_t value, std::string devFile);
+    void sendSDO(uint8_t CANid, SDOkey sdo, uint8_t value, std::string devFile);
 
     /***********************************************************************/
     // NMT specific functions
@@ -135,11 +136,12 @@ namespace canopen
 
     extern TPCANMsg NMTmsg;
 
-    inline void sendNMT(uint8_t CANid, uint8_t command){
+    inline void sendNMT(uint8_t CANid, uint8_t command, std::string devFile)
+    {
         //std::cout << "Sending NMT. CANid: " << (uint16_t)CANid << "\tcommand: " << (uint16_t)command << std::endl;
         NMTmsg.DATA[0] = command;
         NMTmsg.DATA[1] = CANid;
-        CAN_Write(canopen::h, &NMTmsg);
+        CAN_Write(canopen::h[devFile], &NMTmsg);
     }
 
     /***************************************************************/
@@ -148,8 +150,9 @@ namespace canopen
 
     extern TPCANMsg syncMsg;
 
-    inline void sendSync() {
-        CAN_Write(canopen::h, &syncMsg);
+    inline void sendSync(std::string devFile)
+    {
+        CAN_Write(h[devFile], &syncMsg);
     }
 }
 

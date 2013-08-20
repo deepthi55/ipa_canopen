@@ -238,7 +238,7 @@ class Device : virtual canopen::Device
         void setIPMode(bool ip_mode);
         void setHoming(bool homing_error);
         void setInitialized(bool initialized);
-        void updateDesiredPos();
+        void updateDesiredPos(std::chrono::milliseconds syncInterval);
         void setTimeStamp_msec(std::chrono::milliseconds timeStamp);
         void setTimeStamp_usec(std::chrono::microseconds timeStamp);
         void setEMCYpressed(bool pressed);
@@ -257,6 +257,10 @@ class Device : virtual canopen::Device
 
             std::vector<uint8_t> CANids_;
             std::vector<std::string> names_;
+            uint32_t syncInterval_;
+            std::string baudrate_;
+            std::string deviceFile_;  //For the moment assume that all group is connected to the same port
+            std::map<uint8_t, cia_402::Device> devices_map_;
 
         public:
 
@@ -281,7 +285,22 @@ class Device : virtual canopen::Device
 
             std::vector<double> getDesiredVel();
 
+            std::map<uint8_t, cia_402::Device> getDevices();
+
+            uint32_t getSyncInterval();
+
+            std::string getBaudRate();
+
+            std::string getDeviceFile();
+
+            void setSyncInterval(uint32_t syncInterval);
+            void setBaudRate(std::string baudRate);
+
+            void setDeviceFile(std::string deviceFile);
+
             void setVel(std::vector<double> velocities);
+
+            void setDevices(std::map<uint8_t, cia_402::Device> devices_map);
 };
     extern std::map<std::string, DeviceGroup> deviceGroups;	// DeviceGroup name -> DeviceGroup object
 
@@ -309,36 +328,39 @@ class Device : virtual canopen::Device
     /***************************************************************/
 
     void setNMTState(uint16_t CANid, std::string targetState);
-    void setMotorState(uint16_t CANid, std::string targetState);
+    void setMotorState(uint16_t CANid, std::string targetState, std::string deviceFile);
 
     /***************************************************************/
     //	define get errors functions
     /***************************************************************/
 
-    void getErrors(uint16_t CANid);
-    std::vector<char> obtainManSWVersion(uint16_t CANid, TPCANRdMsg* m);
-    std::vector<char> obtainManHWVersion(uint16_t CANid, TPCANRdMsg* m);
-    std::vector<char> obtainManDevName(uint16_t CANid, TPCANRdMsg* m);
-    std::vector<uint16_t> obtainVendorID(uint16_t CANid, TPCANRdMsg* m);
-    uint16_t obtainRevNr(uint16_t CANid, TPCANRdMsg* m);
-    std::vector<uint16_t> obtainProdCode(uint16_t CANid, TPCANRdMsg* m);
-    void readErrorsRegister(uint16_t CANid, TPCANRdMsg *m);
-    void readManErrReg(uint16_t CANid, TPCANRdMsg *m);
+    void getErrors(uint16_t CANid, std::string deviceFile);
+    std::vector<char> obtainManSWVersion(uint16_t CANid, TPCANRdMsg* m, std::string deviceFile);
+    std::vector<char> obtainManHWVersion(uint16_t CANid, TPCANRdMsg* m, std::string deviceFile);
+    std::vector<char> obtainManDevName(uint16_t CANid, TPCANRdMsg* m, std::string deviceFile);
+    std::vector<uint16_t> obtainVendorID(uint16_t CANid, TPCANRdMsg* m, std::string deviceFile);
+    uint16_t obtainRevNr(uint16_t CANid, TPCANRdMsg* m, std::string deviceFile);
+    std::vector<uint16_t> obtainProdCode(uint16_t CANid, TPCANRdMsg* m, std::string deviceFile);
+    void readErrorsRegister(uint16_t CANid, TPCANRdMsg *m, std::string deviceFile);
+    void readManErrReg(uint16_t CANid, TPCANRdMsg *m, std::string deviceFile);
 
 
     /***************************************************************/
     //	define init and recover variables and functions
     /***************************************************************/
+    extern std::vector <std::thread> listener_threads;
+    extern std::vector <std::thread> manager_threads;
+    extern std::vector <std::string> open_devices;
 
     extern bool atFirstInit;
 
 
-    void init(std::string deviceFile, std::chrono::milliseconds syncInterval);
-    void pre_init();
-    void process_errors(uint16_t CANid, TPCANRdMsg* m);
+    void init(DeviceGroup deviceGroup, std::chrono::milliseconds syncInterval);
+    void pre_init(cia_402::DeviceGroup deviceGroup);
+    void process_errors(uint16_t CANid, TPCANRdMsg* m, std::string deviceFile);
     void recover(std::string deviceFile, std::chrono::milliseconds syncInterval);
 
-    extern std::function< void (uint16_t CANid, double positionValue) > sendPos;
+    extern std::function< void (uint16_t CANid, double positionValue,cia_402::DeviceGroup) > sendPos;
     extern std::function< void (uint16_t CANid) > geterrors;
 
     /***************************************************************/
@@ -450,10 +472,10 @@ class Device : virtual canopen::Device
     //		define PDO protocol functions
     /***************************************************************/
 
-    void initDeviceManagerThread(std::function<void ()> const& deviceManager);
-    void deviceManager();
+    //void initDeviceManagerThread(std::function<void ()> const& deviceManager);
+    void deviceManager(DeviceGroup deviceGroup);
 
-    void defaultPDOOutgoing(uint16_t CANid, double positionValue);
+    void defaultPDOOutgoing(Device dev, double positionValue);
     void defaultPDO_incoming(uint16_t CANid, const TPCANRdMsg m);
     void defaultEMCY_incoming(uint16_t CANid, const TPCANRdMsg m);
 
@@ -461,8 +483,8 @@ class Device : virtual canopen::Device
     //		define functions for receiving data
     /***************************************************************/
 
-    void initListenerThread(std::function<void ()> const& listener);
-    void defaultListener();
+    //void initListenerThread(std::function<void ()> const& listener);
+    void defaultListener(std::string devName);
 }
 
 #endif // CIA_402_H
