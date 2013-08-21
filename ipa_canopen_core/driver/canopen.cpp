@@ -65,6 +65,8 @@ namespace canopen
     //			define global variables and functions
 
     std::map<std::string, HANDLE> h;
+    std::map<std::string, std::thread> listener_threads;
+    std::vector <std::string> open_devices;
 
     bool recover_active;
 
@@ -184,8 +186,6 @@ namespace canopen
         msg.DATA[6] = 0x00;
         msg.DATA[7] = 0x00;
         CAN_Write(h[devFile], &msg);
-
-
     }
 
     void sendSDO(uint8_t CANid, SDOkey sdo, uint16_t value, std::string devFile){

@@ -154,6 +154,12 @@ namespace canopen
     {
         CAN_Write(h[devFile], &syncMsg);
     }
+
+    /***************************************************************/
+    //	Thread for device and port management
+    /***************************************************************/
+    extern std::map<std::string, std::thread> listener_threads;
+    extern std::vector <std::string> open_devices;
 }
 
 #endif

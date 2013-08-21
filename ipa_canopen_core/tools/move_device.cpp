@@ -27,44 +27,59 @@ int main(int argc, char *argv[]) {
 	std::cout << "Interrupt motion with Ctrl-C" << std::endl;
 	std::string deviceFile = std::string(argv[1]);
 	uint16_t CANid = std::stoi(std::string(argv[2]));
-    canopen::syncInterval = std::chrono::milliseconds(std::stoi(std::string(argv[3])));
+
+    std::map <uint8_t, cia_402::DeviceGroup::device_ptr> devs;
+
+    cia_402::DeviceGroup::device_ptr device(new cia_402::Device(CANid) );
+
+    devs[CANid] = device;
+
+    cia_402::deviceGroups["name"].setDevices(devs);
+    cia_402::deviceGroups["name"].setDeviceFile(deviceFile);
+
+
+    uint32_t syncInterval = std::stoi(std::string(argv[3]));
+    cia_402::deviceGroups["name"].setSyncInterval(syncInterval);
+
 	double targetVel = std::stod(std::string(argv[4]));
 	double accel = std::stod(std::string(argv[5]));
 
-	//std::cout << deviceFile << std::endl;
-	//std::cout << CANid << std::endl;
-    //std::cout << canopen::syncInterval.count() << std::endl;
-	//std::cout << targetVel << std::endl;
-	//std::cout << accel << std::endl;
+    if (!canopen::openConnection(deviceFile))
+    {
+           std::cout << "Cannot open CAN device; aborting." << std::endl;
+           exit(EXIT_FAILURE);
+    }
+    else
+    {
+           std::cout << "Connection to CAN bus established" << std::endl;
+    }
 
-    cia_402::devices[ CANid ] = cia_402::Device(CANid);
-    cia_402::incomingPDOHandlers[ 0x180 + CANid ] = [CANid](const TPCANRdMsg m) { cia_402::defaultPDO_incoming( CANid, m ); };
+    cia_402::pre_init(cia_402::deviceGroups["name"]);
+
+    cia_402::incomingPDOHandlers[ 0x180 + CANid ] = [CANid](const TPCANRdMsg m) { cia_402::defaultPDO_incoming( CANid, m, cia_402::deviceGroups["name"] ); };
     cia_402::sendPos = cia_402::defaultPDOOutgoing;
 
-    cia_402::init(deviceFile, canopen::syncInterval);
+
+    std::cout << "INITIALIZING THE DEVICE" << std::endl;
+    cia_402::init(cia_402::deviceGroups["name"], std::chrono::milliseconds(cia_402::deviceGroups["name"].getSyncInterval()));
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::cout << "INITIALIZATION OF THE DEVICE IS CONCLUDED" << std::endl;
+
+    canopen::sendSDO(CANid, cia_402::MODES_OF_OPERATION, (uint8_t)cia_402::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE, deviceFile);
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    canopen::sendSDO(CANid, cia_402::MODES_OF_OPERATION, (uint8_t)cia_402::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE);
+    cia_402::manager_threads["name"] = std::thread(cia_402::deviceManager,cia_402::deviceGroups["name"]);
+
+    for(auto& thread : cia_402::manager_threads)
+    {
+           thread.second.detach();
+    }
+
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    cia_402::deviceGroups["name"].getDevices()[CANid]->setInitialized(true);
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    cia_402::initDeviceManagerThread(cia_402::deviceManager);
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    cia_402::devices[CANid].setInitialized(true);
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-	//std::cout << "sending Statusword request" << std::endl;
-    //canopen::sendSDO(CANid, cia_402::STATUSWORD);
-	//std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-    /*std::cout << "\t\t\t\tNMTState: " << cia_402::devices[CANid].getNMTState() << std::endl;
-    std::cout << "\t\t\t\tMotorState: " << cia_402::devices[CANid].getMotorState() << std::endl;
-    std::cout << "\t\t\t\tCANid: " << (uint16_t)cia_402::devices[CANid].getCANid() << std::endl;
-    std::cout << "\t\t\t\tActualPos: " << cia_402::devices[CANid].getActualPos() << std::endl;
-    std::cout << "\t\t\t\tDesiredPos: " << cia_402::devices[CANid].getDesiredPos() << std::endl;
-    std::cout << "\t\t\t\tActualVel: " << cia_402::devices[CANid].getActualVel() << std::endl;
-    std::cout << "\t\t\t\tDesiredVel: " << cia_402::devices[CANid].getDesiredVel() << std::endl;*/
-
-	// rest of the code is for moving the device:
 	if (accel != 0) {  // accel of 0 means "move at target vel immediately"
 	 	std::chrono::milliseconds accelerationTime( static_cast<int>(round( 1000.0 * targetVel / accel)) );
 		double vel = 0;
@@ -73,32 +88,27 @@ int main(int argc, char *argv[]) {
 
 		// increasing velocity ramp up to target velocity:
 		std::cout << "Accelerating to target velocity" << std::endl;
-		while (tic < startTime + accelerationTime) {
+        while (tic < startTime + accelerationTime)
+        {
 			tic = std::chrono::high_resolution_clock::now();
 			vel = accel * 0.000001 * std::chrono::duration_cast<std::chrono::microseconds>(tic-startTime).count();
-            cia_402::devices[ CANid ].setDesiredVel(vel);
-            std::this_thread::sleep_for(canopen::syncInterval - (std::chrono::high_resolution_clock::now() - tic));
+
+            cia_402::deviceGroups["name"].getDevices()[CANid]->setDesiredVel(vel);
+            std::cout << vel << std::endl;
+            std::cout << cia_402::deviceGroups["name"].getDevices()[CANid]->getDesiredVel() << std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(cia_402::deviceGroups["name"].getSyncInterval()) - (std::chrono::high_resolution_clock::now() - tic));
 		}
 	}
 
 	// constant velocity when target vel has been reached:
 	std::cout << "Target velocity reached!" << std::endl;
 
-    /*cia_402::devices[ CANid ].setDesiredVel(targetVel);
-    std::cout << "\t\t\t\t\t\tNMTState: " << cia_402::devices[CANid].getNMTState() << std::endl;
-    std::cout << "\t\t\t\t\t\tMotorState: " << cia_402::devices[CANid].getMotorState() << std::endl;
-    std::cout << "\t\t\t\t\t\tCANid: " << (uint16_t)cia_402::devices[CANid].getCANid() << std::endl;
-    std::cout << "\t\t\t\t\t\tActualPos: " << cia_402::devices[CANid].getActualPos() << std::endl;
-    std::cout << "\t\t\t\t\t\tDesiredPos: " << cia_402::devices[CANid].getDesiredPos() << std::endl;
-    std::cout << "\t\t\t\t\t\tActualVel: " << cia_402::devices[CANid].getActualVel() << std::endl;
-    std::cout << "\t\t\t\t\t\tDesiredVel: " << cia_402::devices[CANid].getDesiredVel() << std::endl;*/
-
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	//std::cout << "sending Statusword request" << std::endl;
-    //canopen::sendSDO(CANid, cia_402::STATUSWORD);
+
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 	while (true) {
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 	}
+
 }

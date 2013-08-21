@@ -74,12 +74,100 @@
 #include <XmlRpcValue.h>
 #include <JointLimits.h>
 
-std::string deviceFile;
+/***************************************************************/
+//  Specific types for the ROS NODE
+/***************************************************************/
+
+typedef boost::function<bool(cob_srvs::Trigger::Request&, cob_srvs::Trigger::Response&)> TriggerType;
+typedef boost::function<void(const brics_actuator::JointVelocities&)> JointVelocitiesType;
+typedef boost::function<bool(cob_srvs::SetOperationMode::Request&, cob_srvs::SetOperationMode::Response&)> SetOperationModeCallbackType;
 
 std::map<std::string, JointLimits> joint_limits_;
 
 std::vector<std::string> chainNames;
 std::vector<std::string> jointNames;
+
+/***************************************************************/
+//			This function is responsible for the init callback
+//          related to the specific DeviceGroup
+/***************************************************************/
+
+bool CANopenInit(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &res, std::string chainName)
+{
+
+
+    std::string deviceFile =cia_402::deviceGroups[chainName].getDeviceFile();
+
+    cia_402::init(cia_402::deviceGroups[chainName], std::chrono::milliseconds(cia_402::deviceGroups[chainName].getSyncInterval()));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    for (auto device : cia_402::deviceGroups[chainName].getDevices())
+    {
+        canopen::sendSDO(device.second.getCANid(), cia_402::MODES_OF_OPERATION, cia_402::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE, deviceFile);
+        std::cout << "Setting IP mode for: " << (uint16_t)device.second.getCANid() << std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    cia_402::manager_threads.push_back(std::thread(cia_402::deviceManager,cia_402::deviceGroups[chainName]));
+
+    for (auto device : cia_402::deviceGroups[chainName].getDevices())
+    {
+        device.second.setInitialized(true);
+       // if(device.second.getHomingError())
+         //   return false;
+
+    }
+
+    res.success.data = true;
+    res.error_message.data = "";
+
+    return true;
+}
+
+/***************************************************************/
+//			Responsible for defining the current OperationMode
+//          of the DeviceGroup
+/***************************************************************/
+
+bool setOperationModeCallback(cob_srvs::SetOperationMode::Request &req, cob_srvs::SetOperationMode::Response &res, std::string chainName)
+{
+    res.success.data = true;  // for now this service is just a dummy, not used elsewhere
+    return true;
+}
+
+/***************************************************************/
+//			Responsible for defining the current Velocities
+//          of the DeviceGroup
+/***************************************************************/
+
+void setVel(const brics_actuator::JointVelocities &msg, std::string chainName)
+{
+    if (!cia_402::atFirstInit & !canopen::recover_active)
+    {
+        std::vector<double> velocities;
+        std::vector<double> positions;
+
+
+        for (auto it : msg.velocities)
+        {
+            velocities.push_back( it.value);
+        }
+
+        for (auto device : cia_402::deviceGroups[chainName].getDevices())
+        {
+            positions.push_back((double)device.second.getDesiredPos());
+        }
+
+
+        //joint_limits_[chainName].checkVelocityLimits(velocities);
+        //joint_limits_[chainName].checkPositionLimits(velocities, positions);
+
+        cia_402::deviceGroups[chainName].setVel(velocities);
+    }
+}
 
 /***************************************************************/
 //			Read parameters from the yaml files for configuring
@@ -206,5 +294,54 @@ int main(int argc, char **argv)
 
         cia_402::pre_init(dg.second);
     }
+
+    /***************************************************************/
+    //			defining ROS services and callbacks
+    /***************************************************************/
+
+    std::vector<TriggerType> initCallbacks;
+    std::vector<ros::ServiceServer> initServices;
+
+    std::vector<SetOperationModeCallbackType> setOperationModeCallbacks;
+    std::vector<ros::ServiceServer> setOperationModeServices;
+
+    std::vector<JointVelocitiesType> jointVelocitiesCallbacks;
+    std::vector<ros::Subscriber> jointVelocitiesSubscribers;
+
+    std::map<std::string, ros::Publisher> currentOperationModePublishers;
+    std::map<std::string, ros::Publisher> statePublishers;
+
+    ros::Publisher jointStatesPublisher = n.advertise<sensor_msgs::JointState>("/joint_states", 1);
+    ros::Publisher diagnosticsPublisher = n.advertise<diagnostic_msgs::DiagnosticArray>("/diagnostics", 1);
+
+
+    /***************************************************************/
+    //			Configuring the ROS Node and Initializing the callbacks
+    /***************************************************************/
+
+    for (auto it : cia_402::deviceGroups)
+      {
+          ROS_INFO("Configuring %s", it.first.c_str());
+
+          initCallbacks.push_back( boost::bind(CANopenInit, _1, _2, it.first) );
+          initServices.push_back( n.advertiseService("/" + it.first + "/init", initCallbacks.back()) );
+
+          setOperationModeCallbacks.push_back( boost::bind(setOperationModeCallback, _1, _2, it.first) );
+          setOperationModeServices.push_back( n.advertiseService("/" + it.first + "/set_operation_mode", setOperationModeCallbacks.back()) );
+
+          jointVelocitiesCallbacks.push_back( boost::bind(setVel, _1, it.first) );
+          jointVelocitiesSubscribers.push_back( n.subscribe<brics_actuator::JointVelocities>("/" + it.first + "/command_vel", 1, jointVelocitiesCallbacks.back()) );
+
+          currentOperationModePublishers[it.first] = n.advertise<std_msgs::String>("/" + it.first + "/current_operationmode", 1);
+
+          statePublishers[it.first] = n.advertise<pr2_controllers_msgs::JointTrajectoryControllerState>("/" + it.first + "/state", 1);
+
+          std::cout <<"IT FIRSTTTT" << it.first <<  std::endl;
+      }
+
+      //This defines the loop rate for the ROS node
+      double lr = 1000.0 / std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::milliseconds(10)).count();
+
+      ros::Rate loop_rate(lr);
 
 }
