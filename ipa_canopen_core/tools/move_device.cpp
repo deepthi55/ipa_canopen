@@ -58,8 +58,25 @@ int main(int argc, char *argv[]) {
 
     cia_402::incomingPDOHandlers[ 0x180 + CANid ] = [CANid](const TPCANRdMsg m) { cia_402::defaultPDO_incoming( CANid, m, cia_402::deviceGroups["name"] ); };
     cia_402::sendPos = cia_402::defaultPDOOutgoing;
+//////////////////////////////////////////////
+    canopen::listener_threads[deviceFile] = std::thread(cia_402::defaultListener, cia_402::deviceGroups["name"]);
 
+    canopen::sendSDO(CANid, cia_402::STATUSWORD, deviceFile);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
+    canopen::sendSDO(CANid, cia_402::STATUSWORD, deviceFile);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    canopen::sendSDO(CANid, cia_402::STATUSWORD, deviceFile);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    canopen::sendSDO(CANid, cia_402::STATUSWORD, deviceFile);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    canopen::sendSDO(CANid, cia_402::STATUSWORD, deviceFile);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+///////////////////////////////////////////
+/*
     std::cout << "INITIALIZING THE DEVICE" << std::endl;
     cia_402::init(cia_402::deviceGroups["name"], std::chrono::milliseconds(cia_402::deviceGroups["name"].getSyncInterval()));
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -110,5 +127,5 @@ int main(int argc, char *argv[]) {
 	while (true) {
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 	}
-
+*/
 }
