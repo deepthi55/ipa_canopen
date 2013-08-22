@@ -119,7 +119,15 @@ bool CANopenInit(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &r
        // if(device.second.getHomingError())
          //   return false;
 
+        device.second->setDesiredPos((double)device.second->getActualPos());
+        device.second->setDesiredVel(0);
+
+        cia_402::sendPos(device.first, (double)device.second->getDesiredPos(), cia_402::deviceGroups[chainName]);
+        cia_402::sendPos(device.first, (double)device.second->getDesiredPos(), cia_402::deviceGroups[chainName]);
+
+
     }
+
 
     res.success.data = true;
     res.error_message.data = "";
@@ -263,7 +271,8 @@ void readParamsFromParameterServer(ros::NodeHandle n)
         }
         auto name = static_cast<std::string>(busParams[cN]["name"]);
 
-        cia_402::deviceGroups[name]->setDevices(dev_vec);
+        cia_402::deviceGroups[name]->setCANids(moduleIDs);
+        cia_402::deviceGroups[name]->setNames(jointNames);
 
     }
 
@@ -298,6 +307,16 @@ int main(int argc, char **argv)
 
         cia_402::pre_init(dg.second);
     }
+
+    /********************************************/
+
+       // add custom PDOs:
+       cia_402::sendPos = cia_402::defaultPDOOutgoing;
+       for (auto it : cia_402::deviceGroups["arm_controller"]->getDevices())
+       {
+           cia_402::incomingPDOHandlers[ 0x180 + it.first ] = [it](const TPCANRdMsg m, cia_402::DeviceGroup::device_group_ptr deviceGroup) { cia_402::defaultPDO_incoming( it.first, m, cia_402::deviceGroups["name"] ); };
+           cia_402::incomingEMCYHandlers[ 0x081 + it.first ] = [it](const TPCANRdMsg mE, cia_402::DeviceGroup::device_group_ptr deviceGroup) { cia_402::defaultPDO_incoming( it.first, mE, cia_402::deviceGroups["name"] ); };
+       }
 
     /***************************************************************/
     //			defining ROS services and callbacks
@@ -343,15 +362,41 @@ int main(int argc, char **argv)
           std::cout <<"IT FIRSTTTT" << it.first <<  std::endl;
       }
 
-      //This defines the loop rate for the ROS node
-      double lr = 1000.0 / std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::milliseconds(10)).count();
+          //This defines the loop rate for the ROS node
+          double lr = 1000.0 / std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::milliseconds(10)).count();
 
-      ros::Rate loop_rate(lr);
+          ros::Rate loop_rate(lr);
 
-      while (ros::ok())
-          {
-          ros::spinOnce();
-                loop_rate.sleep();
-            }
-        return 0;
-}
+          while (ros::ok())
+              {
+                for (auto dg : cia_402::deviceGroups)
+                {
+                    sensor_msgs::JointState js;
+                    for (auto name : dg.second->getNames())
+                            std::cout << name << std::endl;
+                    dg.second->getNames();
+                    js.name = dg.second->getNames();
+                    js.header.stamp = ros::Time::now(); // todo: possibly better use timestamp of hardware msg?
+                    js.position = dg.second->getActualPos();
+                    js.velocity = dg.second->getActualVel();
+                    js.effort = std::vector<double>(dg.second->getNames().size(), 0.0);
+                    jointStatesPublisher.publish(js);
+
+                    pr2_controllers_msgs::JointTrajectoryControllerState jtcs;
+                    jtcs.header.stamp = js.header.stamp;
+                    jtcs.actual.positions = js.position;
+                    jtcs.actual.velocities = js.velocity;
+                    jtcs.desired.positions = dg.second->getDesiredPos();
+                    jtcs.desired.velocities = dg.second->getDesiredVel();
+                    statePublishers[dg.first].publish(jtcs);
+
+                    std_msgs::String opmode;
+                    opmode.data = "velocity";
+                    currentOperationModePublishers[dg.first].publish(opmode);
+                }
+
+              ros::spinOnce();
+                    loop_rate.sleep();
+                }
+            return 0;
+    }

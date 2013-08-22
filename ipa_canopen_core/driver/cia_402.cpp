@@ -463,6 +463,18 @@ namespace cia_402
             }
         }
 
+        void DeviceGroup::setCANids(std::vector<uint8_t> CANids)
+        {
+            CANids_ = CANids;
+        }
+
+        void DeviceGroup::setNames(std::vector<std::string> names)
+        {
+            names_= names;
+        }
+
+
+
         void DeviceGroup::setDevices(std::map<uint8_t, device_ptr> devices_map)
         {
             DeviceGroup::devices_map_ = devices_map;
@@ -900,6 +912,7 @@ namespace cia_402
                 }
 
             }
+            std::cout << "Leaving device manager configuration" << std::endl;
         }
 
     std::function< void (uint16_t CANid, double positionValue, cia_402::DeviceGroup::device_group_ptr dev) > sendPos;
@@ -920,6 +933,7 @@ namespace cia_402
         msg.DATA[6] = (mdegPos >> 16) & 0xFF;
         msg.DATA[7] = (mdegPos >> 24) & 0xFF;
         CAN_Write(canopen::h[dev->getDeviceFile()], &msg);
+        std::cout << "DEFAULT PDO IS WORKING" << std::endl;
     }
 
     void defaultEMCY_incoming(uint16_t CANid, const TPCANRdMsg m, DeviceGroup::device_group_ptr deviceGroup) {

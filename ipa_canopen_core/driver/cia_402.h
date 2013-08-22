@@ -299,6 +299,10 @@ class Device : virtual canopen::Device
 
             void setVel(std::vector<double> velocities);
 
+            void setCANids(std::vector<uint8_t> CANids);
+
+            void setNames(std::vector<std::string> names);
+
             void setDevices(std::map<uint8_t, device_ptr> devices_map);
 
         private:
