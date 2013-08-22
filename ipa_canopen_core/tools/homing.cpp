@@ -30,8 +30,11 @@ int main(int argc, char *argv[]) {
 
     devs[CANid] = device;
 
-    cia_402::deviceGroups["name"].setDevices(devs);
-    cia_402::deviceGroups["name"].setDeviceFile(deviceFile);
+    cia_402::DeviceGroup::device_group_ptr devgroup_ptr(new cia_402::DeviceGroup("name"));
+
+    cia_402::deviceGroups["name"] = devgroup_ptr;
+    cia_402::deviceGroups["name"]->setDevices(devs);
+    cia_402::deviceGroups["name"]->setDeviceFile(deviceFile);
 
     cia_402::init(cia_402::deviceGroups["name"], std::chrono::milliseconds(100));
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));

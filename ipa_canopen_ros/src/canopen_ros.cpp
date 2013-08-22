@@ -96,26 +96,26 @@ bool CANopenInit(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &r
 {
 
 
-    std::string deviceFile =cia_402::deviceGroups[chainName].getDeviceFile();
+    std::string deviceFile =cia_402::deviceGroups[chainName]->getDeviceFile();
 
-    cia_402::init(cia_402::deviceGroups[chainName], std::chrono::milliseconds(cia_402::deviceGroups[chainName].getSyncInterval()));
+    cia_402::init(cia_402::deviceGroups[chainName], std::chrono::milliseconds(cia_402::deviceGroups[chainName]->getSyncInterval()));
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    for (auto device : cia_402::deviceGroups[chainName].getDevices())
+    for (auto device : cia_402::deviceGroups[chainName]->getDevices())
     {
-        canopen::sendSDO(device.second.getCANid(), cia_402::MODES_OF_OPERATION, cia_402::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE, deviceFile);
-        std::cout << "Setting IP mode for: " << (uint16_t)device.second.getCANid() << std::endl;
+        canopen::sendSDO(device.second->getCANid(), cia_402::MODES_OF_OPERATION, cia_402::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE, deviceFile);
+        std::cout << "Setting IP mode for: " << (uint16_t)device.second->getCANid() << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    cia_402::manager_threads.push_back(std::thread(cia_402::deviceManager,cia_402::deviceGroups[chainName]));
+    cia_402::manager_threads[chainName] = std::thread(cia_402::deviceManager,cia_402::deviceGroups[chainName]);
 
-    for (auto device : cia_402::deviceGroups[chainName].getDevices())
+    for (auto device : cia_402::deviceGroups[chainName]->getDevices())
     {
-        device.second.setInitialized(true);
+        device.second->setInitialized(true);
        // if(device.second.getHomingError())
          //   return false;
 
@@ -156,16 +156,16 @@ void setVel(const brics_actuator::JointVelocities &msg, std::string chainName)
             velocities.push_back( it.value);
         }
 
-        for (auto device : cia_402::deviceGroups[chainName].getDevices())
+        for (auto device : cia_402::deviceGroups[chainName]->getDevices())
         {
-            positions.push_back((double)device.second.getDesiredPos());
+            positions.push_back((double)device.second->getDesiredPos());
         }
 
 
         //joint_limits_[chainName].checkVelocityLimits(velocities);
         //joint_limits_[chainName].checkPositionLimits(velocities, positions);
 
-        cia_402::deviceGroups[chainName].setVel(velocities);
+        cia_402::deviceGroups[chainName]->setVel(velocities);
     }
 }
 
@@ -194,10 +194,12 @@ void readParamsFromParameterServer(ros::NodeHandle n)
     {
 
         auto name = static_cast<std::string>(busParams[i]["name"]);
-        cia_402::deviceGroups[name] = cia_402::DeviceGroup();
-        cia_402::deviceGroups[name].setBaudRate(static_cast<std::string>(busParams[i]["baudrate"]));
-        cia_402::deviceGroups[name].setSyncInterval(static_cast<int>(busParams[i]["sync_interval"]));
-        cia_402::deviceGroups[name].setDeviceFile(static_cast<std::string>(busParams[i]["device_file"]));
+        cia_402::DeviceGroup::device_group_ptr devgroup_ptr(new cia_402::DeviceGroup("name"));
+
+        cia_402::deviceGroups[name] = devgroup_ptr;
+        cia_402::deviceGroups[name]->setBaudRate(static_cast<std::string>(busParams[i]["baudrate"]));
+        cia_402::deviceGroups[name]->setSyncInterval(static_cast<int>(busParams[i]["sync_interval"]));
+        cia_402::deviceGroups[name]->setDeviceFile(static_cast<std::string>(busParams[i]["device_file"]));
         // Reading the chains from the canopenmaster configuration
         chainNames.push_back(static_cast<std::string>(chainNames_XMLRPC[i]));
         std::cout << chainNames[i] << std::endl;
@@ -251,15 +253,17 @@ void readParamsFromParameterServer(ros::NodeHandle n)
         }
 
 
-        std::map<uint8_t, cia_402::Device> dev_vec;
+        std::map<uint8_t, cia_402::DeviceGroup::device_ptr> dev_vec;
 
         for (unsigned int i=0; i<jointNames.size(); i++)
         {
-            dev_vec [moduleIDs[i]] = cia_402::Device(moduleIDs[i], jointNames[i], chainNames[cN], devices[i]);
+            cia_402::DeviceGroup::device_ptr device(new cia_402::Device(moduleIDs[i], jointNames[i], chainNames[cN], devices[i]) );
+            dev_vec [moduleIDs[i]] = device;
             std::cout << moduleIDs[i]<<  jointNames[i]<< chainNames[cN]<< devices[i] << std::endl;
         }
         auto name = static_cast<std::string>(busParams[cN]["name"]);
-        cia_402::deviceGroups[name].setDevices(dev_vec);
+
+        cia_402::deviceGroups[name]->setDevices(dev_vec);
 
     }
 
@@ -277,7 +281,7 @@ int main(int argc, char **argv)
 
     for (auto dg : cia_402::deviceGroups)
     {
-        std::string deviceFile = dg.second.getDeviceFile();
+        std::string deviceFile = dg.second->getDeviceFile();
 
         std::cout << deviceFile << std::endl;
 
@@ -344,4 +348,10 @@ int main(int argc, char **argv)
 
       ros::Rate loop_rate(lr);
 
+      while (ros::ok())
+          {
+          ros::spinOnce();
+                loop_rate.sleep();
+            }
+        return 0;
 }

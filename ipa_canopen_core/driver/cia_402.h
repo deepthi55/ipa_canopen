@@ -170,7 +170,7 @@ class Device : virtual canopen::Device
             emcy_released_(true) {};
 
         std::string getNMTState();
-        std::string getMotorState();
+        std::string getdeviceStateMachine();
         std::vector<char> getManufacturerSWVersion();
         std::vector<char> getManufacturerHWVersion();
         std::vector<char> getManufacturerDevName();
@@ -211,7 +211,7 @@ class Device : virtual canopen::Device
         void setDesiredPos(double pos);
         void setActualVel(double vel);
         void setDesiredVel(double vel);
-        void setMotorState(std::string nextState);
+        void deviceStateMachine(std::string nextState);
         void setManufacturerSWVersion(std::vector<char> ms_version);
         void setManufacturerHWVersion(std::vector<char> mh_version);
         void setManufacturerDevName(std::vector<char> dev_name);
@@ -254,8 +254,12 @@ class Device : virtual canopen::Device
 
         public:
             typedef std::shared_ptr<cia_402::Device> device_ptr;
+            typedef std::shared_ptr<cia_402::DeviceGroup> device_group_ptr;
 
             DeviceGroup() {};
+
+            DeviceGroup(std::string name):
+                group_name_(name) {};
 
             DeviceGroup(std::vector<uint8_t> CANids):
                 CANids_(CANids) {};
@@ -267,6 +271,8 @@ class Device : virtual canopen::Device
             std::vector<uint8_t> getCANids();
 
             std::vector<std::string> getNames();
+
+            std::string getGroupName();
 
             std::vector<double> getActualPos();
 
@@ -289,6 +295,8 @@ class Device : virtual canopen::Device
 
             void setDeviceFile(std::string deviceFile);
 
+            void setGroupName(std::string groupName);
+
             void setVel(std::vector<double> velocities);
 
             void setDevices(std::map<uint8_t, device_ptr> devices_map);
@@ -297,6 +305,7 @@ class Device : virtual canopen::Device
 
         std::vector<uint8_t> CANids_;
         std::vector<std::string> names_;
+        std::string group_name_;
         uint32_t syncInterval_;
         std::string baudrate_;
         std::string deviceFile_;  //For the moment assume that all group is connected to the same port
@@ -305,7 +314,7 @@ class Device : virtual canopen::Device
 
         std::map<uint8_t, DeviceGroup::device_ptr> devices_map_;
 };
-    extern std::map<std::string, DeviceGroup> deviceGroups;	// DeviceGroup name -> DeviceGroup object
+    extern std::map<std::string, DeviceGroup::device_group_ptr> deviceGroups;	// DeviceGroup name -> DeviceGroup object
 
 
     /***************************************************************/
@@ -319,19 +328,19 @@ class Device : virtual canopen::Device
         return static_cast<double>(static_cast<double>(alpha)/360000.0*2*M_PI);
     }
 
-    void statusword_incoming(uint8_t CANid, BYTE data[8], cia_402::DeviceGroup deviceGroup);
-    void errorword_incoming(uint8_t CANid, BYTE data[1], DeviceGroup deviceGroup);
+    void statusword_incoming(uint8_t CANid, BYTE data[8], cia_402::DeviceGroup::device_group_ptr deviceGroup);
+    void errorword_incoming(uint8_t CANid, BYTE data[1], cia_402::DeviceGroup::device_group_ptr deviceGroup);
 
-    extern std::map<canopen::SDOkey, std::function<void (uint8_t CANid, BYTE data[8], cia_402::DeviceGroup deviceGroup)> > incomingDataHandlers;
-    extern std::map<uint16_t, std::function<void (const TPCANRdMsg m)> > incomingPDOHandlers;
-    extern std::map<uint16_t, std::function<void (const TPCANRdMsg m)> > incomingEMCYHandlers;
+    extern std::map<canopen::SDOkey, std::function<void (uint8_t CANid, BYTE data[8], cia_402::DeviceGroup::device_group_ptr deviceGroup)> > incomingDataHandlers;
+    extern std::map<uint16_t, std::function<void (const TPCANRdMsg m, cia_402::DeviceGroup::device_group_ptr deviceGroup)> > incomingPDOHandlers;
+    extern std::map<uint16_t, std::function<void (const TPCANRdMsg m, cia_402::DeviceGroup::device_group_ptr deviceGroup)> > incomingEMCYHandlers;
 
     /***************************************************************/
     //			define state machine functions
     /***************************************************************/
 
     void setNMTState(uint16_t CANid, std::string targetState);
-    void setMotorState(uint16_t CANid, std::string targetState, std::string deviceFile, cia_402::DeviceGroup deviceGroup);
+    void setMotorState(uint16_t CANid, std::string targetState, cia_402::DeviceGroup::device_ptr device, std::string deviceFile);
 
     /***************************************************************/
     //	define get errors functions
@@ -352,12 +361,12 @@ class Device : virtual canopen::Device
     //	define init and recover variables and functions
     /***************************************************************/
     extern bool atFirstInit;
-    void init(DeviceGroup deviceGroup, std::chrono::milliseconds syncInterval);
-    void pre_init(cia_402::DeviceGroup deviceGroup);
-    void process_errors(uint16_t CANid, TPCANRdMsg* m, std::string deviceFile, DeviceGroup deviceGroup);
+    void init(DeviceGroup::device_group_ptr deviceGroup, std::chrono::milliseconds syncInterval);
+    void pre_init(DeviceGroup::device_group_ptr deviceGroup);
+    void process_errors(uint16_t CANid, TPCANRdMsg* m, std::string deviceFile, DeviceGroup::device_group_ptr deviceGroup);
     void recover(std::string deviceFile, std::chrono::milliseconds syncInterval);
 
-    extern std::function< void (uint16_t CANid, double positionValue,cia_402::DeviceGroup) > sendPos;
+    extern std::function< void (uint16_t CANid, double positionValue,cia_402::DeviceGroup::device_group_ptr) > sendPos;
     extern std::function< void (uint16_t CANid) > geterrors;
 
     /***************************************************************/
@@ -470,17 +479,17 @@ class Device : virtual canopen::Device
     /***************************************************************/
 
     //void initDeviceManagerThread(std::function<void ()> const& deviceManager);
-    void deviceManager(DeviceGroup deviceGroup);
+    void deviceManager(DeviceGroup::device_group_ptr deviceGroup);
 
-    void defaultPDOOutgoing(uint16_t CANid, double positionValue, cia_402::DeviceGroup dev);
-    void defaultPDO_incoming(uint16_t CANid, const TPCANRdMsg m, cia_402::DeviceGroup deviceGroup);
-    void defaultEMCY_incoming(uint16_t CANid, const TPCANRdMsg m, DeviceGroup deviceGroup);
+    void defaultPDOOutgoing(uint16_t CANid, double positionValue, DeviceGroup::device_group_ptr dev);
+    void defaultPDO_incoming(uint16_t CANid, const TPCANRdMsg m, cia_402::DeviceGroup::device_group_ptr deviceGroup);
+    void defaultEMCY_incoming(uint16_t CANid, const TPCANRdMsg m, DeviceGroup::device_group_ptr deviceGroup);
 
     /***************************************************************/
     //		define functions for receiving data
     /***************************************************************/
     extern std::map<std::string, std::thread> manager_threads;
-    void defaultListener(cia_402::DeviceGroup deviceGroup);
+    void defaultListener(DeviceGroup::device_group_ptr deviceGroup);
 }
 
 #endif // CIA_402_H
