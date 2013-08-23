@@ -68,8 +68,6 @@ namespace canopen
     std::map<std::string, std::thread> listener_threads;
     std::vector <std::string> open_devices;
 
-    bool recover_active;
-
     bool openConnection(std::string devFile)
     {
         h[devFile] = LINUX_CAN_Open(devFile.c_str(), O_RDWR);
@@ -187,7 +185,6 @@ namespace canopen
         msg.DATA[6] = 0x00;
         msg.DATA[7] = 0x00;
         CAN_Write(h[devFile], &msg);
-        std::cout << "Sending SDO" << devFile <<(uint16_t) msg.ID << std::endl;
     }
 
     void sendSDO(uint8_t CANid, SDOkey sdo, uint16_t value, std::string devFile){
@@ -203,7 +200,6 @@ namespace canopen
         msg.DATA[6] = 0x00;
         msg.DATA[7] = 0x00;
         CAN_Write(h[devFile], &msg);
-        std::cout << "Sending SDO" << devFile <<(uint16_t) msg.ID << std::endl;
     }
 
     void processSingleSDO(uint8_t CANid, TPCANRdMsg* message, std::string devFile)

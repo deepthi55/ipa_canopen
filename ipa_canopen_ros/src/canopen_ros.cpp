@@ -203,7 +203,7 @@ bool setOperationModeCallback(cob_srvs::SetOperationMode::Request &req, cob_srvs
 
 void setVel(const brics_actuator::JointVelocities &msg, std::string chainName)
 {
-    if (! cia_402::deviceGroups[chainName].atFirstInit() & !canopen::recover_active)
+    if (! cia_402::deviceGroups[chainName].atFirstInit() & !cia_402::deviceGroups[chainName].rActive())
     {
         std::vector<double> velocities;
         std::vector<double> positions;
@@ -418,8 +418,6 @@ int main(int argc, char **argv)
           currentOperationModePublishers[it.first] = n.advertise<std_msgs::String>("/" + it.first + "/current_operationmode", 1);
 
           statePublishers[it.first] = n.advertise<pr2_controllers_msgs::JointTrajectoryControllerState>("/" + it.first + "/state", 1);
-
-          std::cout <<"IT FIRSTTTT" << it.first <<  std::endl;
       }
 
       //This defines the loop rate for the ROS node
@@ -433,8 +431,6 @@ int main(int argc, char **argv)
         for (auto dg : cia_402::deviceGroups)
         {
             sensor_msgs::JointState js;
-            for (auto name : dg.second.getNames())
-                    std::cout << name << std::endl;
             dg.second.getNames();
             js.name = dg.second.getNames();
             js.header.stamp = ros::Time::now(); // todo: possibly better use timestamp of hardware msg?

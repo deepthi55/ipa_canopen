@@ -401,6 +401,12 @@ namespace cia_402
             return atFirstInit_;
         }
 
+        bool DeviceGroup::rActive()
+        {
+            return recoverActive_;
+        }
+
+
 
         std::string DeviceGroup::getGroupName(){
             return group_name_;
@@ -453,6 +459,11 @@ namespace cia_402
         void DeviceGroup::setFirstInit(bool atInit)
         {
             DeviceGroup::atFirstInit_ = atInit;
+        }
+
+        void DeviceGroup::setRecoverActive(bool rActive)
+        {
+            DeviceGroup::recoverActive_ = rActive;
         }
 
         void DeviceGroup::setDeviceFile(std::string deviceFile)
@@ -575,7 +586,7 @@ namespace cia_402
 
         canopen::syncMsg.LEN = 0x00;
 
-        canopen::recover_active = false;
+        deviceGroups[chainName].setRecoverActive(false);
 
         if (!canopen::openConnection(deviceGroups[chainName].getDeviceFile())){
             std::cout << "Cannot open CAN device; aborting." << std::endl;
@@ -697,8 +708,9 @@ namespace cia_402
         std::string deviceFile = deviceGroups[chainName].getDeviceFile();
         CAN_Close(canopen::h[deviceFile]);
 
+        std::cout << "Starting (recover)" << std::endl;
 
-        canopen::recover_active = true;
+        deviceGroups[chainName].setRecoverActive(true);
 
         canopen::NMTmsg.ID = 0;
         canopen::NMTmsg.MSGTYPE = 0x00;
@@ -766,14 +778,6 @@ namespace cia_402
                 cia_402::setMotorState(CANID, cia_402::MS_OPERATION_ENABLED, device.second, deviceFile);
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-                canopen::sendSDO((uint16_t)CANID, cia_402::IP_TIME_UNITS, (uint8_t) syncInterval.count() , deviceFile);
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                canopen::sendSDO((uint16_t)CANID, cia_402::IP_TIME_INDEX, (uint8_t)cia_402::IP_TIME_INDEX_MILLISECONDS, deviceFile);
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                canopen::sendSDO((uint16_t)CANID, cia_402::SYNC_TIMEOUT_FACTOR, (uint8_t)cia_402::SYNC_TIMEOUT_FACTOR_DISABLE_TIMEOUT);
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-
             }
 
 
@@ -784,7 +788,9 @@ namespace cia_402
             cia_402::sendPos((uint16_t)CANID, (double)deviceGroups[chainName].getDevices()[CANID]->getDesiredPos(),chainName);
 
         }
-        canopen::recover_active = false;
+
+        std::cout << "Concluded (recover)" << std::endl;
+        deviceGroups[chainName].setRecoverActive(false);
     }
 
     /***************************************************************/
@@ -890,11 +896,10 @@ namespace cia_402
             uint32_t syncInterval = deviceGroups[chainName].getSyncInterval();
             while (true) {
                 auto tic = std::chrono::high_resolution_clock::now();
-                if (!canopen::recover_active){
+                if (!deviceGroups[chainName].rActive()){
                     for (auto device : deviceGroups[chainName].getDevices())
                     {
                         uint8_t CANID = device.first;
-                        std::cout << "Sending Pos" << (uint16_t) CANID << std::endl;
                         if (device.second->getInitialized())
                         {
                             device.second->updateDesiredPos(std::chrono::milliseconds(syncInterval));
@@ -907,7 +912,6 @@ namespace cia_402
                 }
 
             }
-            std::cout << "Leaving device manager configuration" << std::endl;
         }
 
     std::function< void (uint16_t CANid, double positionValue, std::string chainName) > sendPos;
@@ -1068,7 +1072,7 @@ namespace cia_402
         deviceGroups[chainName].getDevices()[CANid]->setReadySwitchON(ready_switch_on);
         deviceGroups[chainName].getDevices()[CANid]->setSwitchON(switched_on);
 
-       std::cout << "Motor State of Device with CANid " << (uint16_t)CANid << " is: " << deviceGroups[chainName].getDevices()[CANid]->getdeviceStateMachine() << std::endl;
+//       std::cout << "Motor State of Device with CANid " << (uint16_t)CANid << " is: " << deviceGroups[chainName].getDevices()[CANid]->getdeviceStateMachine() << std::endl;
 
 
     }
@@ -1094,7 +1098,6 @@ namespace cia_402
              std::string devName = deviceGroups[chainName].getDeviceFile();
 
              TPCANRdMsg m;
-             std::cout << devName << std::endl;
              errno = LINUX_CAN_Read(canopen::h[devName], &m);
              if (errno)
                  perror("LINUX_CAN_Read() error");
@@ -1126,7 +1129,7 @@ namespace cia_402
 
              // incoming SD0
              else if (m.Msg.ID >= 0x580 && m.Msg.ID <= 0x5FF){
-                 std::cout << std::hex << "SDO received:  " << (uint16_t)m.Msg.ID << "  " << (uint16_t)m.Msg.DATA[0] << " " << (uint16_t)m.Msg.DATA[1] << " " << (uint16_t)m.Msg.DATA[2] << " " << (uint16_t)m.Msg.DATA[3] << " " << (uint16_t)m.Msg.DATA[4] << " " << (uint16_t)m.Msg.DATA[5] << " " << (uint16_t)m.Msg.DATA[6] << " " << (uint16_t)m.Msg.DATA[7] << std::endl;
+//                 std::cout << std::hex << "SDO received:  " << (uint16_t)m.Msg.ID << "  " << (uint16_t)m.Msg.DATA[0] << " " << (uint16_t)m.Msg.DATA[1] << " " << (uint16_t)m.Msg.DATA[2] << " " << (uint16_t)m.Msg.DATA[3] << " " << (uint16_t)m.Msg.DATA[4] << " " << (uint16_t)m.Msg.DATA[5] << " " << (uint16_t)m.Msg.DATA[6] << " " << (uint16_t)m.Msg.DATA[7] << std::endl;
                  canopen::SDOkey sdoKey(m);
                  if (incomingErrorHandlers.find(sdoKey) != incomingErrorHandlers.end())
                      incomingErrorHandlers[sdoKey](m.Msg.ID - 0x580, m.Msg.DATA, chainName);
