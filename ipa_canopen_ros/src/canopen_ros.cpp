@@ -113,6 +113,10 @@ bool CANopenInit(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &r
 
     cia_402::manager_threads[chainName] = std::thread(cia_402::deviceManager,chainName);
 
+    cia_402::manager_threads[chainName].detach();
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+
     for (auto device : cia_402::deviceGroups[chainName].getDevices())
     {
 
@@ -199,7 +203,7 @@ bool setOperationModeCallback(cob_srvs::SetOperationMode::Request &req, cob_srvs
 
 void setVel(const brics_actuator::JointVelocities &msg, std::string chainName)
 {
-    if (!cia_402::atFirstInit & !canopen::recover_active)
+    if (! cia_402::deviceGroups[chainName].atFirstInit() & !canopen::recover_active)
     {
         std::vector<double> velocities;
         std::vector<double> positions;
@@ -248,7 +252,7 @@ void readParamsFromParameterServer(ros::NodeHandle n)
     {
 
         auto name = static_cast<std::string>(busParams[i]["name"]);
-
+        cia_402::deviceGroups[name].setFirstInit(true);
         cia_402::deviceGroups[name].setBaudRate(static_cast<std::string>(busParams[i]["baudrate"]));
         cia_402::deviceGroups[name].setSyncInterval(static_cast<int>(busParams[i]["sync_interval"]));
         cia_402::deviceGroups[name].setDeviceFile(static_cast<std::string>(busParams[i]["device_file"]));
@@ -356,10 +360,16 @@ int main(int argc, char **argv)
 
        // add custom PDOs:
        cia_402::sendPos = cia_402::defaultPDOOutgoing;
-       for (auto it : cia_402::deviceGroups["arm_controller"].getDevices())
+
+       for (auto dg : cia_402::deviceGroups)
        {
-           cia_402::incomingPDOHandlers[ 0x180 + it.first ] = [it](const TPCANRdMsg m, std::string chainName) { cia_402::defaultPDO_incoming( it.first, m, "arm_controller" ); };
-           cia_402::incomingEMCYHandlers[ 0x081 + it.first ] = [it](const TPCANRdMsg mE, std::string chainName) { cia_402::defaultPDO_incoming( it.first, mE, "arm_controller" ); };
+           std::string chainName = dg.first;
+
+           for (auto it : dg.second.getDevices())
+           {
+               cia_402::incomingPDOHandlers[ 0x180 + it.first ] = [it](const TPCANRdMsg m, std::string chainName) { cia_402::defaultPDO_incoming( it.first, m, chainName ); };
+               cia_402::incomingEMCYHandlers[ 0x081 + it.first ] = [it](const TPCANRdMsg mE, std::string chainName) { cia_402::defaultPDO_incoming( it.first, mE, chainName ); };
+           }
        }
 
     /***************************************************************/
@@ -412,41 +422,150 @@ int main(int argc, char **argv)
           std::cout <<"IT FIRSTTTT" << it.first <<  std::endl;
       }
 
-          //This defines the loop rate for the ROS node
-          double lr = 1000.0 / std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::milliseconds(10)).count();
+      //This defines the loop rate for the ROS node
+      double lr = 1000.0 / std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::milliseconds(10)).count();
 
-          ros::Rate loop_rate(lr);
+      ros::Rate loop_rate(lr);
 
-          while (ros::ok())
+      //Main ROS Loop
+      while (ros::ok())
+      {
+        for (auto dg : cia_402::deviceGroups)
+        {
+            sensor_msgs::JointState js;
+            for (auto name : dg.second.getNames())
+                    std::cout << name << std::endl;
+            dg.second.getNames();
+            js.name = dg.second.getNames();
+            js.header.stamp = ros::Time::now(); // todo: possibly better use timestamp of hardware msg?
+            js.position = dg.second.getActualPos();
+            js.velocity = dg.second.getActualVel();
+            js.effort = std::vector<double>(dg.second.getNames().size(), 0.0);
+            jointStatesPublisher.publish(js);
+
+            pr2_controllers_msgs::JointTrajectoryControllerState jtcs;
+            jtcs.header.stamp = js.header.stamp;
+            jtcs.actual.positions = js.position;
+            jtcs.actual.velocities = js.velocity;
+            jtcs.desired.positions = dg.second.getDesiredPos();
+            jtcs.desired.velocities = dg.second.getDesiredVel();
+            statePublishers[dg.first].publish(jtcs);
+
+            std_msgs::String opmode;
+            opmode.data = "velocity";
+            currentOperationModePublishers[dg.first].publish(opmode);
+
+
+            //DIAGNOSTICS BEGIN
+            /////////////////////////////////////////////////////////////
+            // publishing diagnostic messages
+            diagnostic_msgs::DiagnosticArray diagnostics;
+            diagnostic_msgs::DiagnosticStatus diagstatus;
+            std::vector<diagnostic_msgs::DiagnosticStatus> diagstatus_msg;
+            diagnostic_msgs::KeyValue keyval;
+
+            std::vector<diagnostic_msgs::KeyValue> keyvalues;
+
+
+
+            diagnostics.status.resize(1);
+
+            for (auto device : dg.second.getDevices())
+            {
+
+            //ROS_INFO("Name %s", name.c_str() );
+
+            keyval.key = "Node ID";
+            uint16_t node_id = device.second->getCANid();
+            std::stringstream result;
+            result << node_id;
+            keyval.value = result.str().c_str();
+            keyvalues.push_back(keyval);
+
+            keyval.key = "Hardware Version";
+            std::vector<char> manhw = device.second->getManufacturerHWVersion();
+            keyval.value = std::string(manhw.begin(), manhw.end());
+            keyvalues.push_back(keyval);
+
+            keyval.key = "Software Version";
+            std::vector<char> mansw = device.second->getManufacturerSWVersion();
+            keyval.value = std::string(mansw.begin(), mansw.end());
+            keyvalues.push_back(keyval);
+
+            keyval.key = "Device Name";
+            std::vector<char> dev_name = device.second->getManufacturerDevName();
+            keyval.value = std::string(dev_name.begin(), dev_name.end());
+            keyvalues.push_back(keyval);
+
+            keyval.key = "Vendor ID";
+            std::vector<uint16_t> vendor_id = device.second->getVendorID();
+            std::stringstream result1;
+            for (auto it : vendor_id)
+            {
+               result1 <<  std::hex << it;
+            }
+            keyval.value = result1.str().c_str();
+            keyvalues.push_back(keyval);
+
+            keyval.key = "Revision Number";
+            uint16_t rev_number = device.second->getRevNumber();
+            std::stringstream result2;
+            result2 << rev_number;
+            keyval.value = result2.str().c_str();
+            keyvalues.push_back(keyval);
+
+            keyval.key = "Product Code";
+            std::vector<uint16_t> prod_code = device.second->getProdCode();
+            std::stringstream result3;
+            std::copy(prod_code.begin(), prod_code.end(), std::ostream_iterator<uint16_t>(result3, " "));
+            keyval.value = result3.str().c_str();
+            keyvalues.push_back(keyval);
+
+            bool error_ = device.second->getFault();
+            bool initialized_ = device.second->getInitialized();
+
+            //ROS_INFO("Fault: %d", error_);
+            //ROS_INFO("Referenced: %d", initialized_);
+
+            // set data to diagnostics
+            if(error_)
+            {
+              diagstatus.level = 2;
+              diagstatus.name = dg.first;
+              diagstatus.message = "Fault occured.";
+              diagstatus.values = keyvalues;
+              break;
+            }
+            else
+            {
+              if (initialized_)
               {
-                for (auto dg : cia_402::deviceGroups)
-                {
-                    sensor_msgs::JointState js;
-                    for (auto name : dg.second.getNames())
-                            std::cout << name << std::endl;
-                    dg.second.getNames();
-                    js.name = dg.second.getNames();
-                    js.header.stamp = ros::Time::now(); // todo: possibly better use timestamp of hardware msg?
-                    js.position = dg.second.getActualPos();
-                    js.velocity = dg.second.getActualVel();
-                    js.effort = std::vector<double>(dg.second.getNames().size(), 0.0);
-                    jointStatesPublisher.publish(js);
+                diagstatus.level = 0;
+                diagstatus.name = dg.first;
+                diagstatus.message = "powerball chain initialized and running";
+                diagstatus.values = keyvalues;
+              }
+              else
+              {
+                diagstatus.level = 1;
+                diagstatus.name = dg.first;
+                diagstatus.message = "powerball chain not initialized";
+                diagstatus.values = keyvalues;
+                break;
+              }
+            }
+        }
+            diagstatus_msg.push_back(diagstatus);
+            // publish diagnostic message
+            diagnostics.status = diagstatus_msg;
+            diagnostics.header.stamp = ros::Time::now();
+            diagnosticsPublisher.publish(diagnostics);
 
-                    pr2_controllers_msgs::JointTrajectoryControllerState jtcs;
-                    jtcs.header.stamp = js.header.stamp;
-                    jtcs.actual.positions = js.position;
-                    jtcs.actual.velocities = js.velocity;
-                    jtcs.desired.positions = dg.second.getDesiredPos();
-                    jtcs.desired.velocities = dg.second.getDesiredVel();
-                    statePublishers[dg.first].publish(jtcs);
+            /////////////////////////////////////////////////////////////
+        }
 
-                    std_msgs::String opmode;
-                    opmode.data = "velocity";
-                    currentOperationModePublishers[dg.first].publish(opmode);
-                }
-
-              ros::spinOnce();
-                    loop_rate.sleep();
-                }
-            return 0;
-    }
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    return 0;
+}

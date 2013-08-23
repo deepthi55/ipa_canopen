@@ -282,6 +282,8 @@ class Device : virtual canopen::Device
 
             std::vector<double> getDesiredVel();
 
+            bool atFirstInit();
+
             std::map<uint8_t, device_ptr> getDevices();
 
             uint32_t getSyncInterval();
@@ -291,6 +293,9 @@ class Device : virtual canopen::Device
             std::string getDeviceFile();
 
             void setSyncInterval(uint32_t syncInterval);
+
+            void setFirstInit(bool atInit);
+
             void setBaudRate(std::string baudRate);
 
             void setDeviceFile(std::string deviceFile);
@@ -314,6 +319,7 @@ class Device : virtual canopen::Device
         std::string baudrate_;
         std::string deviceFile_;  //For the moment assume that all group is connected to the same port
         std::map<uint8_t, DeviceGroup::device_ptr> devices_map_;
+        bool atFirstInit_;
 
 };
     extern std::map<std::string, DeviceGroup> deviceGroups;	// DeviceGroup name -> DeviceGroup object
@@ -362,7 +368,7 @@ class Device : virtual canopen::Device
     /***************************************************************/
     //	define init and recover variables and functions
     /***************************************************************/
-    extern bool atFirstInit;
+
     void init(std::string chainName, std::chrono::milliseconds syncInterval);
     void pre_init(std::string chainName);
     void process_errors(uint16_t CANid, TPCANRdMsg* m, std::string deviceFile, std::string chainName);
