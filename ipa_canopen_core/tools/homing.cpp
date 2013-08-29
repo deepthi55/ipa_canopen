@@ -24,21 +24,27 @@ int main(int argc, char *argv[]) {
 	uint16_t CANid = std::stoi(std::string(argv[2]));
 
     // configure cia_402 device objects and custom incoming and outgoing PDOs:
+
+
+    cia_402 *cia_402_obj= new cia_402();
+
     std::map <uint8_t, cia_402::DeviceGroup::device_ptr> devs;
 
     cia_402::DeviceGroup::device_ptr device(new cia_402::Device(CANid) );
 
     devs[CANid] = device;
 
-    cia_402::deviceGroups["name"].setDevices(devs);
-    cia_402::deviceGroups["name"].setDeviceFile(deviceFile);
+    //cia_402::deviceGroups_type deviceGroups;
 
-    cia_402::init("name", std::chrono::milliseconds(100));
+    deviceGroups_402["name"].setDevices(devs);
+    deviceGroups_402["name"].setDeviceFile(deviceFile);
+
+    cia_402_obj->init("name", std::chrono::milliseconds(100));
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
   
-    canopen::sendSDO(CANid, cia_402::MODES_OF_OPERATION, cia_402::MODES_OF_OPERATION_HOMING_MODE, deviceFile);
+    canopen::sendSDO(CANid, MODES_OF_OPERATION, MODES_OF_OPERATION_HOMING_MODE, deviceFile);
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    canopen::sendSDO(CANid, cia_402::CONTROLWORD, (uint16_t) (cia_402::CONTROLWORD_ENABLE_OPERATION | cia_402::CONTROLWORD_START_HOMING), deviceFile);
+    canopen::sendSDO(CANid, CONTROLWORD, (uint16_t) (CONTROLWORD_ENABLE_OPERATION | CONTROLWORD_START_HOMING), deviceFile);
 	std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	std::cout << "Homing complete" << std::endl;
 }

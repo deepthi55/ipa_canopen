@@ -80,85 +80,85 @@
 namespace canopen
 {
 
-    /***************************************************************/
-    //		    define classes and structs
-    /***************************************************************/
+/***************************************************************/
+//		    define classes and structs
+/***************************************************************/
 
-    class Device
-    {
-    };
+class Device
+{
+};
 
-    class DeviceGroup{
-    };
+class DeviceGroup{
+};
 
-    struct SDOkey{
-        uint16_t index;
-        uint8_t subindex;
+struct SDOkey{
+    uint16_t index;
+    uint8_t subindex;
 
-        inline SDOkey(TPCANRdMsg m):
-            index((m.Msg.DATA[2] << 8) + m.Msg.DATA[1]),
-            subindex(m.Msg.DATA[3]) {};
+    inline SDOkey(TPCANRdMsg m):
+        index((m.Msg.DATA[2] << 8) + m.Msg.DATA[1]),
+        subindex(m.Msg.DATA[3]) {};
 
-        inline SDOkey(uint16_t i, uint8_t s):
-            index(i),
-            subindex(s) {};
-    };
+    inline SDOkey(uint16_t i, uint8_t s):
+        index(i),
+        subindex(s) {};
+};
 
-    extern std::chrono::milliseconds syncInterval;
-    extern std::map<std::string, HANDLE> h;
-    extern std::map<SDOkey, std::function<void (uint8_t CANid, BYTE data[8])> > incomingDataHandlers;
-    extern std::map<uint16_t, std::function<void (const TPCANRdMsg m)> > incomingPDOHandlers;
-    extern std::map<uint16_t, std::function<void (const TPCANRdMsg m)> > incomingEMCYHandlers;
+extern std::chrono::milliseconds syncInterval;
+extern std::map<std::string, HANDLE> h;
+extern std::map<SDOkey, std::function<void (uint8_t CANid, BYTE data[8])> > incomingDataHandlers;
+extern std::map<uint16_t, std::function<void (const TPCANRdMsg m)> > incomingPDOHandlers;
+extern std::map<uint16_t, std::function<void (const TPCANRdMsg m)> > incomingEMCYHandlers;
 
-    bool openConnection(std::string devFile);
+bool openConnection(std::string devFile);
 
-    inline bool operator<(const SDOkey &a, const SDOkey &b) {
-            return a.index < b.index || (a.index == b.index && a.subindex < b.subindex);
-    }
+inline bool operator<(const SDOkey &a, const SDOkey &b) {
+    return a.index < b.index || (a.index == b.index && a.subindex < b.subindex);
+}
 
-    /***********************************************************************/
-    // SDO specific functions
-    /***********************************************************************/
-    void processSingleSDO(uint8_t CANid, TPCANRdMsg* message, std::string devFile);
-    void requestDataBlock1(uint8_t CANid, std::string devFile);
-    void requestDataBlock2(uint8_t CANid, std::string devFile);
+/***********************************************************************/
+// SDO specific functions
+/***********************************************************************/
+void processSingleSDO(uint8_t CANid, TPCANRdMsg* message, std::string devFile);
+void requestDataBlock1(uint8_t CANid, std::string devFile);
+void requestDataBlock2(uint8_t CANid, std::string devFile);
 
-    void sendSDO(uint8_t CANid, SDOkey sdo, std::string devFile);
-    void sendSDO(uint8_t CANid, SDOkey sdo, uint32_t value,std::string devFile);
-    void sendSDO(uint8_t CANid, SDOkey sdo, int32_t value, std::string devFile);
-    void sendSDO(uint8_t CANid, SDOkey sdo, uint16_t value, std::string devFile);
-    void sendSDO(uint8_t CANid, SDOkey sdo, uint8_t value, std::string devFile);
+void sendSDO(uint8_t CANid, SDOkey sdo, std::string devFile);
+void sendSDO(uint8_t CANid, SDOkey sdo, uint32_t value,std::string devFile);
+void sendSDO(uint8_t CANid, SDOkey sdo, int32_t value, std::string devFile);
+void sendSDO(uint8_t CANid, SDOkey sdo, uint16_t value, std::string devFile);
+void sendSDO(uint8_t CANid, SDOkey sdo, uint8_t value, std::string devFile);
 
-    /***********************************************************************/
-    // NMT specific functions
-    /***********************************************************************/
+/***********************************************************************/
+// NMT specific functions
+/***********************************************************************/
 
-    extern TPCANMsg NMTmsg;
+extern TPCANMsg NMTmsg;
 
-    inline void sendNMT(uint8_t CANid, uint8_t command, std::string devFile)
-    {
-        //std::cout << "Sending NMT. CANid: " << (uint16_t)CANid << "\tcommand: " << (uint16_t)command << std::endl;
-        NMTmsg.DATA[0] = command;
-        NMTmsg.DATA[1] = CANid;
-        CAN_Write(canopen::h[devFile], &NMTmsg);
-    }
+inline void sendNMT(uint8_t CANid, uint8_t command, std::string devFile)
+{
+    //std::cout << "Sending NMT. CANid: " << (uint16_t)CANid << "\tcommand: " << (uint16_t)command << std::endl;
+    NMTmsg.DATA[0] = command;
+    NMTmsg.DATA[1] = CANid;
+    CAN_Write(canopen::h[devFile], &NMTmsg);
+}
 
-    /***************************************************************/
-    //	define SYNC variables and functions
-    /***************************************************************/
+/***************************************************************/
+//	define SYNC variables and functions
+/***************************************************************/
 
-    extern TPCANMsg syncMsg;
+extern TPCANMsg syncMsg;
 
-    inline void sendSync(std::string devFile)
-    {
-        CAN_Write(h[devFile], &syncMsg);
-    }
+inline void sendSync(std::string devFile)
+{
+    CAN_Write(h[devFile], &syncMsg);
+}
 
-    /***************************************************************/
-    //	Thread for device and port management
-    /***************************************************************/
-    extern std::map<std::string, std::thread> listener_threads;
-    extern std::vector <std::string> open_devices;
+/***************************************************************/
+//	Thread for device and port management
+/***************************************************************/
+extern std::map<std::string, std::thread> listener_threads;
+extern std::vector <std::string> open_devices;
 }
 
 #endif

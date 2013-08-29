@@ -76,19 +76,24 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <canopen.h>
+#include <cia_402_constants.h>
 
 
 /***************************************************************/
-//		    Namespace for the CAN in automation standard
+//		    Class for the CAN in automation standard
 //          CIA 402 - Drives and Motion Control
 /***************************************************************/
-namespace cia_402
+/***************************************************************/
+//		    define classes and structs
+/***************************************************************/
+
+
+class cia_402
 {
-    /***************************************************************/
-    //		    define classes and structs
-    /***************************************************************/
-class Device : virtual canopen::Device
-{
+
+public:
+    class Device : virtual canopen::Device
+    {
 
     private:
 
@@ -246,74 +251,74 @@ class Device : virtual canopen::Device
         bool getEMCYpressed();
         bool getEMCYreleased();
 
-};
+    };
 
     class DeviceGroup : virtual canopen::DeviceGroup
-{
+    {
 
 
-        public:
-            typedef std::shared_ptr<cia_402::Device> device_ptr;
-            typedef std::shared_ptr<cia_402::DeviceGroup> device_group_ptr;
+    public:
+        typedef std::shared_ptr<Device> device_ptr;
+        typedef std::shared_ptr<DeviceGroup> device_group_ptr;
 
-            DeviceGroup() {};
+        DeviceGroup() {};
 
-            DeviceGroup(std::string name):
-                group_name_(name) {};
+        DeviceGroup(std::string name):
+            group_name_(name) {};
 
-            DeviceGroup(std::vector<uint8_t> CANids):
-                CANids_(CANids) {};
+        DeviceGroup(std::vector<uint8_t> CANids):
+            CANids_(CANids) {};
 
-            DeviceGroup(std::vector<uint8_t> CANids, std::vector<std::string> names):
-                CANids_(CANids),
-                names_(names) {};
+        DeviceGroup(std::vector<uint8_t> CANids, std::vector<std::string> names):
+            CANids_(CANids),
+            names_(names) {};
 
-            std::vector<uint8_t> getCANids();
+        std::vector<uint8_t> getCANids();
 
-            std::vector<std::string> getNames();
+        std::vector<std::string> getNames();
 
-            std::string getGroupName();
+        std::string getGroupName();
 
-            std::vector<double> getActualPos();
+        std::vector<double> getActualPos();
 
-            std::vector<double> getDesiredPos();
+        std::vector<double> getDesiredPos();
 
-            std::vector<double> getActualVel();
+        std::vector<double> getActualVel();
 
-            std::vector<double> getDesiredVel();
+        std::vector<double> getDesiredVel();
 
-            bool atFirstInit();
-            bool rActive();
+        bool atFirstInit();
+        bool rActive();
 
-            std::map<uint8_t, device_ptr> getDevices();
+        std::map<uint8_t, device_ptr> getDevices();
 
-            uint32_t getSyncInterval();
+        uint32_t getSyncInterval();
 
-            std::string getBaudRate();
+        std::string getBaudRate();
 
-            std::string getDeviceFile();
+        std::string getDeviceFile();
 
-            void setSyncInterval(uint32_t syncInterval);
+        void setSyncInterval(uint32_t syncInterval);
 
-            void setFirstInit(bool atInit);
+        void setFirstInit(bool atInit);
 
-            void setRecoverActive(bool rActive);
+        void setRecoverActive(bool rActive);
 
-            void setBaudRate(std::string baudRate);
+        void setBaudRate(std::string baudRate);
 
-            void setDeviceFile(std::string deviceFile);
+        void setDeviceFile(std::string deviceFile);
 
-            void setGroupName(std::string groupName);
+        void setGroupName(std::string groupName);
 
-            void setVel(std::vector<double> velocities);
+        void setVel(std::vector<double> velocities);
 
-            void setCANids(std::vector<uint8_t> CANids);
+        void setCANids(std::vector<uint8_t> CANids);
 
-            void setNames(std::vector<std::string> names);
+        void setNames(std::vector<std::string> names);
 
-            void setDevices(std::map<uint8_t, device_ptr> devices_map);
+        void setDevices(std::map<uint8_t, device_ptr> devices_map);
 
-        private:
+    private:
 
         std::vector<uint8_t> CANids_;
         std::vector<std::string> names_;
@@ -325,34 +330,40 @@ class Device : virtual canopen::Device
         bool atFirstInit_;
         bool recoverActive_;
 
-};
-    extern std::map<std::string, DeviceGroup> deviceGroups;	// DeviceGroup name -> DeviceGroup object
+    };
 
+    cia_402() { }
+
+
+
+    //s_type;	// DeviceGroup name -> DeviceGroup object
 
     /***************************************************************/
     //		define global variables and functions
     /***************************************************************/
-    inline int32_t rad2mdeg(double phi){
-        return static_cast<int32_t>(round(phi/(2*M_PI)*360000.0));
-    }
+    static int32_t rad2mdeg(double phi);
+    static double mdeg2rad(int32_t alpha);
+    //    inline int32_t rad2mdeg(double phi){
+    //        return static_cast<int32_t>(round(phi/(2*M_PI)*360000.0));
+    //    }
 
-    inline double mdeg2rad(int32_t alpha){
-        return static_cast<double>(static_cast<double>(alpha)/360000.0*2*M_PI);
-    }
+    //    inline double mdeg2rad(int32_t alpha){
+    //        return static_cast<double>(static_cast<double>(alpha)/360000.0*2*M_PI);
+    //    }
 
     void statusword_incoming(uint8_t CANid, BYTE data[8], std::string chainName);
     void errorword_incoming(uint8_t CANid, BYTE data[1], std::string chainName);
 
-    extern std::map<canopen::SDOkey, std::function<void (uint8_t CANid, BYTE data[8], std::string chainName)> > incomingDataHandlers;
-    extern std::map<uint16_t, std::function<void (const TPCANRdMsg m, std::string chainName)> > incomingPDOHandlers;
-    extern std::map<uint16_t, std::function<void (const TPCANRdMsg m, std::string chainName)> > incomingEMCYHandlers;
+    static std::map<canopen::SDOkey, std::function<void (uint8_t CANid, BYTE data[8], std::string chainName)> > incomingDataHandlers;
+    static std::map<uint16_t, std::function<void (const TPCANRdMsg m, std::string chainName)> > incomingPDOHandlers;
+    static std::map<uint16_t, std::function<void (const TPCANRdMsg m, std::string chainName)> > incomingEMCYHandlers;
 
     /***************************************************************/
     //			define state machine functions
     /***************************************************************/
 
     void setNMTState(uint16_t CANid, std::string targetState);
-    void setMotorState(uint16_t CANid, std::string targetState, cia_402::DeviceGroup::device_ptr device, std::string deviceFile);
+    void setMotorState(uint16_t CANid, std::string targetState, DeviceGroup::device_ptr device, std::string deviceFile);
 
     /***************************************************************/
     //	define get errors functions
@@ -378,130 +389,29 @@ class Device : virtual canopen::Device
     void process_errors(uint16_t CANid, TPCANRdMsg* m, std::string deviceFile, std::string chainName);
     void recover(std::string deviceFile, std::chrono::milliseconds syncInterval);
 
-    extern std::function< void (uint16_t CANid, double positionValue,std::string chainName) > sendPos;
-    extern std::function< void (uint16_t CANid) > geterrors;
+    static std::function< void (uint16_t CANid, double positionValue,std::string chainName) > sendPos;
+    std::function< void (uint16_t CANid) > geterrors;
 
-    /***************************************************************/
-    //	define NMT constants, variables and functions
-    /***************************************************************/
 
-    const uint8_t NMT_START_REMOTE_NODE = 0x01;
-    const uint8_t NMT_STOP_REMOTE_NODE = 0x02;
-    const uint8_t NMT_ENTER_PRE_OPERATIONAL = 0x80;
-    const uint8_t NMT_RESET_NODE = 0x81;
-    const uint8_t NMT_RESET_COMMUNICATION = 0x82;
-
-    /***************************************************************/
-    //		define NMT error control constants
-    /***************************************************************/
-
-    const canopen::SDOkey HEARTBEAT(0x1017,0x0);
-
-    const uint16_t HEARTBEAT_TIME = 1500;
-
-    /***************************************************************/
-    //		Error Constants for Error Register
-    /***************************************************************/
-
-    static unsigned char const EMC_k_1001_GENERIC        = 0x01;
-    static unsigned char const EMC_k_1001_CURRENT        = 0x02;
-    static unsigned char const EMC_k_1001_VOLTAGE        = 0x04;
-    static unsigned char const EMC_k_1001_TEMPERATURE    = 0x08;
-    static unsigned char const EMC_k_1001_COMMUNICATION  = 0x10;
-    static unsigned char const EMC_k_1001_DEV_PROF_SPEC  = 0x20;
-    static unsigned char const EMC_k_1001_RESERVED       = 0x40;
-    static unsigned char const EMC_k_1001_MANUFACTURER   = 0x80;
-
-    /***************************************************************/
-    //		define motor state constants
-    /***************************************************************/
-
-    const std::string MS_NOT_READY_TO_SWITCH_ON = "NOT_READY_TO_SWITCH_ON";
-    const std::string MS_FAULT = "FAULT";
-    const std::string MS_SWITCHED_ON_DISABLED = "SWITCHED_ON_DISABLED";
-    const std::string MS_READY_TO_SWITCH_ON = "READY_TO_SWITCH_ON";
-    const std::string MS_SWITCHED_ON = "SWITCHED_ON";
-    const std::string MS_OPERATION_ENABLED = "OPERATION_ENABLED";
-    const std::string MS_QUICK_STOP_ACTIVE = "QUICK_STOP_ACTIVE";
-    const std::string MS_FAULT_REACTION_ACTIVE = "FAULT_REACTION_ACTIVE";
-
-    /***************************************************************/
-    //		define SDO protocol constants and functions
-    /***************************************************************/
-
-    const canopen::SDOkey STATUSWORD(0x6041, 0x0);
-    const canopen::SDOkey ERRORWORD(0x1001, 0x0);
-    const canopen::SDOkey MANUFACTURER(0x1002, 0x0);
-    const canopen::SDOkey MANUFACTURERDEVICENAME(0x1008, 0x0);
-    const canopen::SDOkey MANUFACTURERHWVERSION(0x1009, 0x0);
-    const canopen::SDOkey MANUFACTURERSOFTWAREVERSION(0x100A, 0x0);
-
-    const canopen::SDOkey IDENTITYVENDORID(0x1018, 0x01);
-    const canopen::SDOkey IDENTITYPRODUCTCODE(0x1018, 0x02);
-    const canopen::SDOkey IDENTITYREVNUMBER(0x1018, 0x03);
-
-    /*************************
-     * Specific for schunk hardware
-     ************************/
-    const canopen::SDOkey SCHUNKLINE(0x200b, 0x1);
-    const canopen::SDOkey SCHUNKDETAIL(0x200b, 0x3);
-    /****************************************
-     */
-
-    const canopen::SDOkey CONTROLWORD(0x6040, 0x0);
-    const canopen::SDOkey MODES_OF_OPERATION(0x6060, 0x0);
-    const canopen::SDOkey MODES_OF_OPERATION_DISPLAY(0x6061, 0x0);
-    const canopen::SDOkey SYNC_TIMEOUT_FACTOR(0x200e, 0x0);
-    const canopen::SDOkey IP_TIME_UNITS(0x60C2, 0x1);
-    const canopen::SDOkey IP_TIME_INDEX(0x60C2, 0x2);
-    const canopen::SDOkey ERROR_CODE(0x603F, 0x0);
-    const canopen::SDOkey ABORT_CONNECTION(0x6007, 0x0);
-    const canopen::SDOkey QUICK_STOP(0x605A, 0x0);
-    const canopen::SDOkey SHUTDOWN(0x605B, 0x0);
-    const canopen::SDOkey DISABLE_CODE(0x605C, 0x0);
-    const canopen::SDOkey HALT(0x605D, 0x0);
-    const canopen::SDOkey FAULT(0x605E, 0x0);
-    const canopen::SDOkey MODES(0x6060, 0x0);
-
-    const uint16_t CONTROLWORD_SHUTDOWN = 6;
-    const uint16_t CONTROLWORD_QUICKSTOP = 2;
-    const uint16_t CONTROLWORD_SWITCH_ON = 7;
-    const uint16_t CONTROLWORD_ENABLE_OPERATION = 15;
-    const uint16_t CONTROLWORD_START_HOMING = 16;
-    const uint16_t CONTROLWORD_ENABLE_IP_MODE = 16;
-    const uint16_t CONTROLWORD_DISABLE_INTERPOLATED = 7;
-    const uint16_t CONTROL_WORD_DISABLE_VOLTAGE = 0x7D;
-    const uint16_t CONTROLWORD_FAULT_RESET_0 = 0x00; //0x00;
-    const uint16_t CONTROLWORD_FAULT_RESET_1 = 0x80;
-    const uint16_t CONTROLWORD_HALT = 0x100;
-
-    const uint8_t MODES_OF_OPERATION_HOMING_MODE = 0x6;
-    const uint8_t MODES_OF_OPERATION_PROFILE_POSITION_MODE = 0x1;
-    const uint8_t MODES_OF_OPERATION_VELOCITY_MODE = 0x2;
-    const uint8_t MODES_OF_OPERATION_PROFILE_VELOCITY_MODE = 0x3;
-    const uint8_t MODES_OF_OPERATION_TORQUE_PROFILE_MODE = 0x4;
-    const uint8_t MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE = 0x7;
-
-    const int8_t IP_TIME_INDEX_MILLISECONDS = 0xFD;
-    const int8_t IP_TIME_INDEX_HUNDREDMICROSECONDS = 0xFC;
-    const uint8_t SYNC_TIMEOUT_FACTOR_DISABLE_TIMEOUT = 0;
 
     /***************************************************************/
     //		define PDO protocol functions
     /***************************************************************/
 
     //void initDeviceManagerThread(std::function<void ()> const& deviceManager);
-    void deviceManager(std::string chainName);
+    static void deviceManager(std::string chainName);
 
-    void defaultPDOOutgoing(uint16_t CANid, double positionValue, std::string chainName);
-    void defaultPDO_incoming(uint16_t CANid, const TPCANRdMsg m, std::string chainName);
+    static void defaultPDOOutgoing(uint16_t CANid, double positionValue, std::string chainName);
+    static void defaultPDO_incoming(uint16_t CANid, const TPCANRdMsg m, std::string chainName);
     void defaultEMCY_incoming(uint16_t CANid, const TPCANRdMsg m, std::string chainName);
 
     /***************************************************************/
     //		define functions for receiving data
     /***************************************************************/
-    extern std::map<std::string, std::thread> manager_threads;
-    void defaultListener(std::string chainName);
-}
+    std::map<std::string, std::thread> manager_threads;
+    static void defaultListener(std::string chainName);
+};
+
+extern std::map<std::string, cia_402::DeviceGroup> deviceGroups_402;
 
 #endif // CIA_402_H

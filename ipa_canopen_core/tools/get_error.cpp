@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
     //devices[ CANid ] = cia_402::Device(CANid);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    canopen::sendNMT(CANid, cia_402::NMT_START_REMOTE_NODE, deviceFile);
+    canopen::sendNMT(CANid, NMT_START_REMOTE_NODE, deviceFile);
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -108,24 +108,25 @@ int main(int argc, char *argv[])
 
     TPCANRdMsg m;
 
+    cia_402 *cia_402_obj= new cia_402();
 
-    cia_402::readErrorsRegister(CANid, &m, deviceFile);
+    cia_402_obj->readErrorsRegister(CANid, &m, deviceFile);
 
     /***************************************************************/
     //		Manufacturer specific errors register
     /***************************************************************/
-    cia_402::readManErrReg(CANid, &m, deviceFile);
+    cia_402_obj->readManErrReg(CANid, &m, deviceFile);
 
     /**************************
      * Hardware and Software Information
     *************************/
 
-    std::vector<uint16_t> vendor_id = cia_402::obtainVendorID(CANid, &m, deviceFile);
-    uint16_t rev_number = cia_402::obtainRevNr(CANid, &m, deviceFile);
-    std::vector<uint16_t> product_code = cia_402::obtainProdCode(CANid, &m, deviceFile);
-    std::vector<char> manufacturer_device_name = cia_402::obtainManDevName(CANid,&m, deviceFile);
-    std::vector<char> manufacturer_hw_version =  cia_402::obtainManHWVersion(CANid, &m, deviceFile);
-    std::vector<char> manufacturer_sw_version =  cia_402::obtainManSWVersion(CANid, &m, deviceFile);
+    std::vector<uint16_t> vendor_id = cia_402_obj->obtainVendorID(CANid, &m, deviceFile);
+    uint16_t rev_number = cia_402_obj->obtainRevNr(CANid, &m, deviceFile);
+    std::vector<uint16_t> product_code = cia_402_obj->obtainProdCode(CANid, &m, deviceFile);
+    std::vector<char> manufacturer_device_name = cia_402_obj->obtainManDevName(CANid,&m, deviceFile);
+    std::vector<char> manufacturer_hw_version =  cia_402_obj->obtainManHWVersion(CANid, &m, deviceFile);
+    std::vector<char> manufacturer_sw_version =  cia_402_obj->obtainManSWVersion(CANid, &m, deviceFile);
 
         /****
          *Printing the data
