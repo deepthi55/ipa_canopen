@@ -258,10 +258,8 @@ public:
 
 
     public:
-        typedef std::shared_ptr<Device> device_ptr;
-        typedef std::shared_ptr<DeviceGroup> device_group_ptr;
-
         DeviceGroup() {};
+        typedef std::shared_ptr<Device> device_ptr;
 
         DeviceGroup(std::string name):
             group_name_(name) {};
@@ -332,11 +330,20 @@ public:
 
     };
 
-    cia_402() { }
+    typedef std::shared_ptr<Device> device_ptr;
+    typedef std::shared_ptr<DeviceGroup> device_group_ptr;
 
+    std::map<std::string, device_group_ptr> deviceGroups;
 
+    std::map<canopen::SDOkey, std::function<void (uint8_t CANid, BYTE data[8], cia_402::device_group_ptr)> > incomingDataHandlers;
 
-    //s_type;	// DeviceGroup name -> DeviceGroup object
+    void updatedeviceGroups(std::string name, device_group_ptr dgroup);
+
+    void updateDataHandlers(canopen::SDOkey, std::function<void (uint8_t CANid, BYTE data[8], cia_402::device_group_ptr)>);
+
+    std::map <std::string, device_group_ptr> getdeviceGroups();
+
+    std::map<canopen::SDOkey, std::function<void (uint8_t CANid, BYTE data[8], cia_402::device_group_ptr)> > getDataHandlers();
 
     /***************************************************************/
     //		define global variables and functions
@@ -351,12 +358,17 @@ public:
     //        return static_cast<double>(static_cast<double>(alpha)/360000.0*2*M_PI);
     //    }
 
-    void statusword_incoming(uint8_t CANid, BYTE data[8], std::string chainName);
-    void errorword_incoming(uint8_t CANid, BYTE data[1], std::string chainName);
+    void statusword_incoming(uint8_t CANid, BYTE data[8], cia_402::device_group_ptr);
+    void errorword_incoming(uint8_t CANid, BYTE data[1], cia_402::device_group_ptr);
 
-    static std::map<canopen::SDOkey, std::function<void (uint8_t CANid, BYTE data[8], std::string chainName)> > incomingDataHandlers;
-    static std::map<uint16_t, std::function<void (const TPCANRdMsg m, std::string chainName)> > incomingPDOHandlers;
-    static std::map<uint16_t, std::function<void (const TPCANRdMsg m, std::string chainName)> > incomingEMCYHandlers;
+
+
+    static std::map<uint16_t, std::function<void (const TPCANRdMsg m, cia_402::device_group_ptr)> > incomingPDOHandlers;
+    static std::map<uint16_t, std::function<void (const TPCANRdMsg m, cia_402::device_group_ptr)> > incomingEMCYHandlers;
+
+    cia_402() { };
+    cia_402(std::map<std::string, device_group_ptr> devGroups):
+        deviceGroups(devGroups) { };
 
     /***************************************************************/
     //			define state machine functions
@@ -384,12 +396,12 @@ public:
     //	define init and recover variables and functions
     /***************************************************************/
 
-    void init(std::string chainName, std::chrono::milliseconds syncInterval);
-    void pre_init(std::string chainName);
-    void process_errors(uint16_t CANid, TPCANRdMsg* m, std::string deviceFile, std::string chainName);
-    void recover(std::string deviceFile, std::chrono::milliseconds syncInterval);
+    void init(cia_402::device_group_ptr, std::chrono::milliseconds syncInterval);
+    void pre_init(cia_402::device_group_ptr);
+    void process_errors(uint16_t CANid, TPCANRdMsg* m, std::string deviceFile, cia_402::device_group_ptr devGroup);
+    void recover(cia_402::device_group_ptr, std::chrono::milliseconds syncInterval);
 
-    static std::function< void (uint16_t CANid, double positionValue,std::string chainName) > sendPos;
+    static std::function< void (uint16_t CANid, double positionValue,cia_402::device_group_ptr) > sendPos;
     std::function< void (uint16_t CANid) > geterrors;
 
 
@@ -399,19 +411,17 @@ public:
     /***************************************************************/
 
     //void initDeviceManagerThread(std::function<void ()> const& deviceManager);
-    static void deviceManager(std::string chainName);
+    void deviceManager(cia_402::device_group_ptr);
 
-    static void defaultPDOOutgoing(uint16_t CANid, double positionValue, std::string chainName);
-    static void defaultPDO_incoming(uint16_t CANid, const TPCANRdMsg m, std::string chainName);
-    void defaultEMCY_incoming(uint16_t CANid, const TPCANRdMsg m, std::string chainName);
+    void defaultPDOOutgoing(uint16_t CANid, double positionValue, cia_402::device_group_ptr);
+    void defaultPDO_incoming(uint16_t CANid, const TPCANRdMsg m, cia_402::device_group_ptr);
+    void defaultEMCY_incoming(uint16_t CANid, const TPCANRdMsg m, cia_402::device_group_ptr);
 
     /***************************************************************/
     //		define functions for receiving data
     /***************************************************************/
     std::map<std::string, std::thread> manager_threads;
-    static void defaultListener(std::string chainName);
+    static void defaultListener(cia_402::device_group_ptr devGroup, std::map<canopen::SDOkey, std::function<void (uint8_t CANid, BYTE data[8], cia_402::device_group_ptr)> >);
 };
-
-extern std::map<std::string, cia_402::DeviceGroup> deviceGroups_402;
 
 #endif // CIA_402_H
