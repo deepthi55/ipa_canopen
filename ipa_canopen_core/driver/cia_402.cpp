@@ -68,24 +68,16 @@
 //		    Namespace for the CAN in automation standard
 //          CIA 402 - Drives and Motion Control
 /***************************************************************/
+
+
 std::map <std::string, cia_402::device_group_ptr> cia_402::getdeviceGroups()
 {
     return cia_402::deviceGroups;
 }
 
-std::map<canopen::SDOkey, std::function<void (uint8_t CANid, BYTE data[8], cia_402::device_group_ptr)> > cia_402::getDataHandlers()
-{
-    return cia_402::incomingDataHandlers;
-}
-
 void cia_402::updatedeviceGroups(std::string name, device_group_ptr dgroup)
 {
-    deviceGroups[name] = dgroup;
-}
-
-void cia_402::updateDataHandlers(canopen::SDOkey key, std::function<void (uint8_t, __u8[], cia_402::device_group_ptr)> func)
-{
-    incomingDataHandlers[key] = func;
+    cia_402::deviceGroups[name] = dgroup;
 }
 
 
@@ -532,6 +524,7 @@ std::map<std::string, std::thread> manager_threads;
 
 void cia_402::statusword_incoming(uint8_t CANid, BYTE data[8], cia_402::device_group_ptr devGroup)
 {
+    std::cout << "CALLED" << std::endl;
 
     uint16_t mydata_low = data[4];
     uint16_t mydata_high = data[5];
@@ -628,6 +621,7 @@ void errorword_incoming(uint8_t CANid, BYTE data[1], cia_402::device_group_ptr d
 
 }
 
+std::map<canopen::SDOkey, std::function<void (uint8_t CANid, BYTE data[8], cia_402::device_group_ptr)> > cia_402::incomingDataHandlers;
 std::map<canopen::SDOkey, std::function<void (uint8_t CANid, BYTE data[8], cia_402::device_group_ptr devGroup)> > incomingErrorHandlers{ { ERRORWORD, errorword_incoming } };
 std::map<uint16_t, std::function<void (const TPCANRdMsg m, cia_402::device_group_ptr devGroup)> > cia_402::incomingPDOHandlers;
 std::map<uint16_t, std::function<void (const TPCANRdMsg m, cia_402::device_group_ptr devGroup)> > cia_402::incomingEMCYHandlers;
@@ -969,7 +963,7 @@ void cia_402::pre_init(cia_402::device_group_ptr devGroup)
 }
 
 
-void cia_402::init(cia_402::device_group_ptr devGroup, std::chrono::milliseconds syncInterval, std::map<canopen::SDOkey, std::function<void (uint8_t CANid, BYTE data[8], cia_402::device_group_ptr)> > incomingHandlers)
+void cia_402::init(cia_402::device_group_ptr devGroup, std::chrono::milliseconds syncInterval)
 {
     std::string deviceFile =devGroup->getDeviceFile();
 
@@ -1024,9 +1018,9 @@ void cia_402::init(cia_402::device_group_ptr devGroup, std::chrono::milliseconds
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         std::cout << "Resetting CAN-device with CAN-ID " << (uint16_t)CANID << std::endl;
         canopen::sendNMT((uint16_t)CANID, NMT_RESET_NODE, deviceFile);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
         canopen::sendNMT((uint16_t)CANID, NMT_START_REMOTE_NODE, deviceFile);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
         canopen::sendSDO(CANID, STATUSWORD, deviceFile);
 
@@ -1034,52 +1028,51 @@ void cia_402::init(cia_402::device_group_ptr devGroup, std::chrono::milliseconds
         /////////////////////////////////////////////////////////////////
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-                      canopen::sendSDO(CANID, STATUSWORD, deviceFile);
-                      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//                      canopen::sendSDO(CANID, STATUSWORD, deviceFile);
+//                      std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-                      canopen::sendSDO(CANID, STATUSWORD, deviceFile);
-                      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//                      canopen::sendSDO(CANID, STATUSWORD, deviceFile);
+//                      std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-                      canopen::sendSDO(CANID, STATUSWORD, deviceFile);
-                      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//                      canopen::sendSDO(CANID, STATUSWORD, deviceFile);
+//                      std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-                      canopen::sendSDO(CANID, STATUSWORD, deviceFile);
-                      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//                      canopen::sendSDO(CANID, STATUSWORD, deviceFile);
+//                      std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-                      canopen::sendSDO(CANID, CONTROLWORD, CONTROLWORD_FAULT_RESET_1, deviceFile);
-                      std::this_thread::sleep_for(std::chrono::milliseconds(50));
+//                      canopen::sendSDO(CANID, CONTROLWORD, CONTROLWORD_FAULT_RESET_1, deviceFile);
+//                      std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
-                      canopen::sendSDO(CANID, CONTROLWORD, CONTROLWORD_SHUTDOWN, deviceFile);
-                      std::this_thread::sleep_for(std::chrono::milliseconds(50));
+//                      canopen::sendSDO(CANID, CONTROLWORD, CONTROLWORD_SHUTDOWN, deviceFile);
+//                      std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
-                      canopen::sendSDO(CANID, STATUSWORD, deviceFile);
-                      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-
-                      canopen::sendSDO(CANID, CONTROLWORD, CONTROLWORD_SWITCH_ON, deviceFile);
-                      std::this_thread::sleep_for(std::chrono::milliseconds(50));
-
-                      canopen::sendSDO(CANID, STATUSWORD, deviceFile);
-                      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-                      canopen::sendSDO(CANID, CONTROLWORD, CONTROLWORD_ENABLE_OPERATION, deviceFile);
-                      std::this_thread::sleep_for(std::chrono::milliseconds(50));
-
-                      canopen::sendSDO(CANID, STATUSWORD, deviceFile);
-                      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//                      canopen::sendSDO(CANID, STATUSWORD, deviceFile);
+//                      std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 
-//        cia_402::setMotorState(CANID, MS_SWITCHED_ON_DISABLED, device.second, deviceFile);
-//        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//                      canopen::sendSDO(CANID, CONTROLWORD, CONTROLWORD_SWITCH_ON, deviceFile);
+//                      std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
-//        cia_402::setMotorState(CANID, MS_READY_TO_SWITCH_ON, device.second, deviceFile);
-//        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//                      canopen::sendSDO(CANID, STATUSWORD, deviceFile);
+//                      std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-//        cia_402::setMotorState(CANID, MS_SWITCHED_ON, device.second, deviceFile);
-//        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//                      canopen::sendSDO(CANID, CONTROLWORD, CONTROLWORD_ENABLE_OPERATION, deviceFile);
+//                      std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
-//        cia_402::setMotorState(CANID, MS_OPERATION_ENABLED, device.second, deviceFile);
-//        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//                      canopen::sendSDO(CANID, STATUSWORD, deviceFile);
+//                      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        cia_402::setMotorState(CANID, MS_SWITCHED_ON_DISABLED, devGroup->getDevices()[device.first], deviceFile);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        cia_402::setMotorState(CANID, MS_READY_TO_SWITCH_ON, devGroup->getDevices()[device.first], deviceFile);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        cia_402::setMotorState(CANID, MS_SWITCHED_ON, devGroup->getDevices()[device.first], deviceFile);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        cia_402::setMotorState(CANID, MS_OPERATION_ENABLED, devGroup->getDevices()[device.first], deviceFile);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         //////////////////////////////////////////////////////////////////////
 
         canopen::sendSDO((uint16_t)CANID, IP_TIME_UNITS, (uint8_t) syncInterval.count() , deviceFile);
@@ -1201,11 +1194,14 @@ void cia_402::setNMTState(uint16_t CANid, std::string targetState){
 
 }
 
-void cia_402::setMotorState(uint16_t CANid, std::string targetState, DeviceGroup::device_ptr device, std::string deviceFile)
+void cia_402::setMotorState(uint16_t CANid, std::string targetState, cia_402::device_ptr device, std::string deviceFile)
 {
+
+    std::cout << CANid << targetState << device->getCANid() << deviceFile;
 
     while (device->getdeviceStateMachine() != targetState)
     {
+        std::cout << "Here" << device->getdeviceStateMachine()  << std::endl;
 
         canopen::sendSDO(CANid, STATUSWORD,deviceFile);
         if (device->getdeviceStateMachine() == MS_FAULT)
@@ -1226,10 +1222,10 @@ void cia_402::setMotorState(uint16_t CANid, std::string targetState, DeviceGroup
                 canopen::sendSDO(CANid, CONTROLWORD, CONTROLWORD_FAULT_RESET_0,deviceFile);
                 canopen::sendSDO(CANid, CONTROLWORD, CONTROLWORD_FAULT_RESET_0,deviceFile);
 
-                //                std::this_thread::sleep_for(std::chrono::milliseconds(50));
-                //                canopen::sendSDO(CANid, STATUSWORD,deviceFile);
-                //                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                //                std::cout << "2" << std::endl;
+                                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                                canopen::sendSDO(CANid, STATUSWORD,deviceFile);
+                                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                                std::cout << "2" << std::endl;
             }
             else
             {
@@ -1244,10 +1240,10 @@ void cia_402::setMotorState(uint16_t CANid, std::string targetState, DeviceGroup
                 canopen::sendSDO(CANid, CONTROLWORD, CONTROLWORD_FAULT_RESET_1,deviceFile);
                 canopen::sendSDO(CANid, CONTROLWORD, CONTROLWORD_FAULT_RESET_1,deviceFile);
                 canopen::sendSDO(CANid, CONTROLWORD, CONTROLWORD_FAULT_RESET_1,deviceFile);
-                //                std::this_thread::sleep_for(std::chrono::milliseconds(50));
-                //                canopen::sendSDO(CANid, STATUSWORD,deviceFile);
-                //                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                //                std::cout << "3" << std::endl;
+                                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                                canopen::sendSDO(CANid, STATUSWORD,deviceFile);
+                                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                                std::cout << "3" << std::endl;
             }
 
         }
@@ -1378,7 +1374,7 @@ void cia_402::defaultPDO_incoming(uint16_t CANid, const TPCANRdMsg m, cia_402::d
            devGroup->getDevices()[CANid]->setDesiredPos(newPos);
            devGroup->getDevices()[CANid]->setInitialized(true);
         }
-        // std::cout << "actualPos: " <<devGroup->getDevices()[CANid]->getActualPos() << "  desiredPos: " <<devGroup->getDevices()[CANid]->getDesiredPos() << std::endl;
+         std::cout << "actualPos: " <<devGroup->getDevices()[CANid]->getActualPos() << "  desiredPos: " <<devGroup->getDevices()[CANid]->getDesiredPos() << std::endl;
     }
 
 
@@ -1472,7 +1468,7 @@ void cia_402::defaultPDO_incoming(uint16_t CANid, const TPCANRdMsg m, cia_402::d
    devGroup->getDevices()[CANid]->setReadySwitchON(ready_switch_on);
    devGroup->getDevices()[CANid]->setSwitchON(switched_on);
 
-    //       std::cout << "Motor State of Device with CANid " << (uint16_t)CANid << " is: " <<devGroup->getDevices()[CANid]->getdeviceStateMachine() << std::endl;
+    //std::cout << "Motor State of Device with CANid " << (uint16_t)CANid << " is: " <<devGroup->getDevices()[CANid]->getdeviceStateMachine() << std::endl;
 
 
 }
@@ -1490,12 +1486,14 @@ void cia_402::defaultPDO_incoming(uint16_t CANid, const TPCANRdMsg m, cia_402::d
     }
     */
 
-void cia_402::defaultListener(cia_402::device_group_ptr devGroup, std::map<canopen::SDOkey, std::function<(uint8_t, __u8[], device_group_ptr)> >)
+void cia_402::defaultListener(cia_402::device_group_ptr devGroup)
 {
 
     while(true)
     {
         std::string devName = devGroup->getDeviceFile();
+
+        std::cout << "Listening" << std::endl;
 
         TPCANRdMsg m;
         errno = LINUX_CAN_Read(canopen::h[devName], &m);
@@ -1531,12 +1529,12 @@ void cia_402::defaultListener(cia_402::device_group_ptr devGroup, std::map<canop
 
         // incoming SD0
         else if (m.Msg.ID >= 0x580 && m.Msg.ID <= 0x5FF){
-                             std::cout << std::hex << "SDO received:  " << (uint16_t)m.Msg.ID << "  " << (uint16_t)m.Msg.DATA[0] << " " << (uint16_t)m.Msg.DATA[1] << " " << (uint16_t)m.Msg.DATA[2] << " " << (uint16_t)m.Msg.DATA[3] << " " << (uint16_t)m.Msg.DATA[4] << " " << (uint16_t)m.Msg.DATA[5] << " " << (uint16_t)m.Msg.DATA[6] << " " << (uint16_t)m.Msg.DATA[7] << std::endl;
+                             //std::cout << std::hex << "SDO received:  " << (uint16_t)m.Msg.ID << "  " << (uint16_t)m.Msg.DATA[0] << " " << (uint16_t)m.Msg.DATA[1] << " " << (uint16_t)m.Msg.DATA[2] << " " << (uint16_t)m.Msg.DATA[3] << " " << (uint16_t)m.Msg.DATA[4] << " " << (uint16_t)m.Msg.DATA[5] << " " << (uint16_t)m.Msg.DATA[6] << " " << (uint16_t)m.Msg.DATA[7] << std::endl;
             canopen::SDOkey sdoKey(m);
             if (incomingErrorHandlers.find(sdoKey) != incomingErrorHandlers.end())
                 incomingErrorHandlers[sdoKey](m.Msg.ID - 0x580, m.Msg.DATA, devGroup);
-            if (incomingHandler.find(sdoKey) != incomingHandler.end())
-                incomingHandler[sdoKey](m.Msg.ID - 0x580, m.Msg.DATA, devGroup);
+            if (cia_402::incomingDataHandlers.find(sdoKey) != cia_402::incomingDataHandlers.end())
+                cia_402::incomingDataHandlers[sdoKey](m.Msg.ID - 0x580, m.Msg.DATA, devGroup);
         }
 
         // incoming NMT error control

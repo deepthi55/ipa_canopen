@@ -87,12 +87,11 @@
 //		    define classes and structs
 /***************************************************************/
 
-
 class cia_402
 {
-
 public:
-    class Device : virtual canopen::Device
+
+    class Device : public canopen::Device
     {
 
     private:
@@ -335,15 +334,8 @@ public:
 
     std::map<std::string, device_group_ptr> deviceGroups;
 
-    std::map<canopen::SDOkey, std::function<void (uint8_t CANid, BYTE data[8], cia_402::device_group_ptr)> > incomingDataHandlers;
-
     void updatedeviceGroups(std::string name, device_group_ptr dgroup);
-
-    void updateDataHandlers(canopen::SDOkey, std::function<void (uint8_t CANid, BYTE data[8], cia_402::device_group_ptr)>);
-
     std::map <std::string, device_group_ptr> getdeviceGroups();
-
-    std::map<canopen::SDOkey, std::function<void (uint8_t CANid, BYTE data[8], cia_402::device_group_ptr)> > getDataHandlers();
 
     /***************************************************************/
     //		define global variables and functions
@@ -358,24 +350,22 @@ public:
     //        return static_cast<double>(static_cast<double>(alpha)/360000.0*2*M_PI);
     //    }
 
-    void statusword_incoming(uint8_t CANid, BYTE data[8], cia_402::device_group_ptr);
+    static void statusword_incoming(uint8_t CANid, BYTE data[8], cia_402::device_group_ptr);
     void errorword_incoming(uint8_t CANid, BYTE data[1], cia_402::device_group_ptr);
 
 
-
+    static std::map<canopen::SDOkey, std::function<void (uint8_t CANid, BYTE data[8], cia_402::device_group_ptr)> > incomingDataHandlers;
     static std::map<uint16_t, std::function<void (const TPCANRdMsg m, cia_402::device_group_ptr)> > incomingPDOHandlers;
     static std::map<uint16_t, std::function<void (const TPCANRdMsg m, cia_402::device_group_ptr)> > incomingEMCYHandlers;
 
     cia_402() { };
-    cia_402(std::map<std::string, device_group_ptr> devGroups):
-        deviceGroups(devGroups) { };
 
     /***************************************************************/
     //			define state machine functions
     /***************************************************************/
 
     void setNMTState(uint16_t CANid, std::string targetState);
-    void setMotorState(uint16_t CANid, std::string targetState, DeviceGroup::device_ptr device, std::string deviceFile);
+    void setMotorState(uint16_t CANid, std::string targetState, device_ptr device, std::string deviceFile);
 
     /***************************************************************/
     //	define get errors functions
@@ -411,17 +401,17 @@ public:
     /***************************************************************/
 
     //void initDeviceManagerThread(std::function<void ()> const& deviceManager);
-    void deviceManager(cia_402::device_group_ptr);
+    static void deviceManager(cia_402::device_group_ptr);
 
-    void defaultPDOOutgoing(uint16_t CANid, double positionValue, cia_402::device_group_ptr);
-    void defaultPDO_incoming(uint16_t CANid, const TPCANRdMsg m, cia_402::device_group_ptr);
+    static void defaultPDOOutgoing(uint16_t CANid, double positionValue, cia_402::device_group_ptr);
+    static void defaultPDO_incoming(uint16_t CANid, const TPCANRdMsg m, cia_402::device_group_ptr);
     void defaultEMCY_incoming(uint16_t CANid, const TPCANRdMsg m, cia_402::device_group_ptr);
 
     /***************************************************************/
     //		define functions for receiving data
     /***************************************************************/
     std::map<std::string, std::thread> manager_threads;
-    static void defaultListener(cia_402::device_group_ptr devGroup, std::map<canopen::SDOkey, std::function<void (uint8_t CANid, BYTE data[8], cia_402::device_group_ptr)> >);
+    static void defaultListener(cia_402::device_group_ptr devGroup);
 };
 
 #endif // CIA_402_H

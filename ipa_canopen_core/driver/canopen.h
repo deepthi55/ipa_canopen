@@ -84,11 +84,41 @@ namespace canopen
 //		    define classes and structs
 /***************************************************************/
 
+
+
 class Device
 {
+public:
+    virtual ~Device() {}
+    //virtual void setName(std::string name) = 0;
+    virtual std::string getName() = 0;
+    virtual uint8_t  getCANid() = 0;
+    virtual void setNMTState(std::string nmt_state) = 0;
+    virtual std::string getNMTState() = 0;
+    //virtual void setDeviceFile(std::string device_file) = 0;
+    virtual std::string getDeviceFile() = 0;
+    // Currently not clear if the device also needs to know to which group it is attached
+    //virtual void setGroup(std::string group) = 0;
+    //virtual std::string getGroup() = 0;
+    virtual void setInitialized(bool initialized) = 0;
+    virtual bool getInitialized() = 0;
 };
 
-class DeviceGroup{
+class DeviceGroup
+{
+public:
+    virtual ~DeviceGroup() {}
+    virtual void setGroupName(std::string name) = 0;
+    virtual std::string getGroupName() = 0;
+    virtual void setDeviceFile(std::string device_file) = 0;
+    virtual std::string getDeviceFile() = 0;
+    virtual void setCANids(std::vector<uint8_t> CANids) = 0;
+};
+
+class Profile
+{
+public:
+    virtual ~Profile() {}
 };
 
 struct SDOkey{
