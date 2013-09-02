@@ -74,6 +74,8 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+
+
     canopen::NMTmsg.ID = 0;
     canopen::NMTmsg.MSGTYPE = 0x00;
     canopen::NMTmsg.LEN = 2;
@@ -120,6 +122,8 @@ int main(int argc, char *argv[])
     CAN_Write(canopen::h, &m);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+    std::cin.get();
     /////////////////////////
 
     //////////////////// clear mapping
@@ -137,6 +141,7 @@ int main(int argc, char *argv[])
        CAN_Write(canopen::h, &m);
 
        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+       std::cin.get();
        /////////////////////////
 
        //////////////////// sub ind1=63
@@ -154,6 +159,7 @@ int main(int argc, char *argv[])
           CAN_Write(canopen::h, &m);
 
           std::this_thread::sleep_for(std::chrono::milliseconds(10));
+          std::cin.get();
           /////////////////////////
 
 
@@ -172,6 +178,7 @@ int main(int argc, char *argv[])
              CAN_Write(canopen::h, &m);
 
              std::this_thread::sleep_for(std::chrono::milliseconds(10));
+             std::cin.get();
              /////////////////////////
 
 
@@ -190,6 +197,7 @@ int main(int argc, char *argv[])
                 CAN_Write(canopen::h, &m);
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                std::cin.get();
                 /////////////////////////
 
                 //////////////////// Many datas
@@ -207,6 +215,7 @@ int main(int argc, char *argv[])
                    CAN_Write(canopen::h, &m);
 
                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                   std::cin.get();
                    /////////////////////////
 
                    //////////////////// Mapping 2 objects
@@ -224,6 +233,7 @@ int main(int argc, char *argv[])
                       CAN_Write(canopen::h, &m);
 
                       std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                      std::cin.get();
                       /////////////////////////
 
                       //////////////////// Enable tpdo4
@@ -241,6 +251,7 @@ int main(int argc, char *argv[])
                          CAN_Write(canopen::h, &m);
 
                          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                         std::cin.get();
                          /////////////////////////
 
 }
