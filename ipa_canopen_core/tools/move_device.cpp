@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
 	//std::cout << accel << std::endl;
 
 	canopen::devices[ CANid ] = canopen::Device(CANid);
-    canopen::incomingPDOHandlers[ 0x180 + CANid ] = [CANid](const TPCANRdMsg m) { canopen::defaultPDO_incoming( CANid, m ); };
+    canopen::incomingPDOHandlers[ 0x280 + CANid ] = [CANid](const TPCANRdMsg m) { canopen::defaultPDO_incoming( CANid, m ); };
     canopen::sendPos = canopen::defaultPDOOutgoing;
 
 	canopen::init(deviceFile, canopen::syncInterval);
@@ -78,6 +78,7 @@ int main(int argc, char *argv[]) {
 			vel = accel * 0.000001 * std::chrono::duration_cast<std::chrono::microseconds>(tic-startTime).count();
 			canopen::devices[ CANid ].setDesiredVel(vel);
 			std::this_thread::sleep_for(canopen::syncInterval - (std::chrono::high_resolution_clock::now() - tic));
+            canopen::sendSync();
 		}
 	}
 
