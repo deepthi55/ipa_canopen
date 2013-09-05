@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
     TPCANMsg m;
 
  //////////////////// pp mode
-    m.ID = 0x67F;//CANid + 0x67F;
+    m.ID = 0x60B;//CANid + 0x60B;
     m.MSGTYPE = 0x00;
     m.LEN = 8;
     m.DATA[0] = 0x22;
@@ -123,11 +123,11 @@ int main(int argc, char *argv[])
 
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-    std::cin.get();
+    //std::cin.get();
     /////////////////////////
 
     //////////////////// get mode display
-       m.ID = 0x67F;//CANid + 0x67F;
+       m.ID = 0x60B;//CANid + 0x60B;
        m.MSGTYPE = 0x00;
        m.LEN = 8;
        m.DATA[0] = 0x40;
@@ -142,11 +142,11 @@ int main(int argc, char *argv[])
 
        std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-       std::cin.get();
+       //std::cin.get();
        /////////////////////////
 
        //////////////////// get mode display
-          m.ID = 0x67F;//CANid + 0x67F;
+          m.ID = 0x60B;//CANid + 0x60B;
           m.MSGTYPE = 0x00;
           m.LEN = 8;
           m.DATA[0] = 0x40;
@@ -161,11 +161,11 @@ int main(int argc, char *argv[])
 
           std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-          std::cin.get();
+          //std::cin.get();
           /////////////////////////
 
           //////////////////// Ready to switch on
-             m.ID = 0x67F;//CANid + 0x67F;
+             m.ID = 0x60B;//CANid + 0x60B;
              m.MSGTYPE = 0x00;
              m.LEN = 8;
              m.DATA[0] = 0x22;
@@ -180,11 +180,11 @@ int main(int argc, char *argv[])
 
              std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-             std::cin.get();
+             //std::cin.get();
              /////////////////////////
 
              //////////////////// Read status
-                m.ID = 0x67F;//CANid + 0x67F;
+                m.ID = 0x60B;//CANid + 0x60B;
                 m.MSGTYPE = 0x00;
                 m.LEN = 8;
                 m.DATA[0] = 0x40;
@@ -199,11 +199,11 @@ int main(int argc, char *argv[])
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                std::cin.get();
+                //std::cin.get();
                 /////////////////////////
 
                 //////////////////// Switch on
-                   m.ID = 0x67F;//CANid + 0x67F;
+                   m.ID = 0x60B;//CANid + 0x60B;
                    m.MSGTYPE = 0x00;
                    m.LEN = 8;
                    m.DATA[0] = 0x22;
@@ -218,11 +218,11 @@ int main(int argc, char *argv[])
 
                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                   std::cin.get();
+                   //std::cin.get();
                    /////////////////////////
 
                    //////////////////// Read status
-                      m.ID = 0x67F;//CANid + 0x67F;
+                      m.ID = 0x60B;//CANid + 0x60B;
                       m.MSGTYPE = 0x00;
                       m.LEN = 8;
                       m.DATA[0] = 0x40;
@@ -237,11 +237,11 @@ int main(int argc, char *argv[])
 
                       std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                      std::cin.get();
+                      //std::cin.get();
                       /////////////////////////
 
                       //////////////////// Start mo=1
-                         m.ID = 0x67F;//CANid + 0x67F;
+                         m.ID = 0x60B;//CANid + 0x60B;
                          m.MSGTYPE = 0x00;
                          m.LEN = 8;
                          m.DATA[0] = 0x22;
@@ -256,11 +256,11 @@ int main(int argc, char *argv[])
 
                          std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                         std::cin.get();
+                         //std::cin.get();
                          /////////////////////////
 
                          //////////////////// Read status
-                            m.ID = 0x67F;//CANid + 0x67F;
+                            m.ID = 0x60B;//CANid + 0x60B;
                             m.MSGTYPE = 0x00;
                             m.LEN = 8;
                             m.DATA[0] = 0x40;
@@ -275,14 +275,14 @@ int main(int argc, char *argv[])
 
                             std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                            std::cin.get();
+                            //std::cin.get();
                             /////////////////////////
 
 
                             ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
                             //////////////////// Set speed(10000)
-                               m.ID = 0x67F;//CANid + 0x67F;
+                               m.ID = 0x60B;//CANid + 0x60B;
                                m.MSGTYPE = 0x00;
                                m.LEN = 8;
                                m.DATA[0] = 0x22;
@@ -297,11 +297,11 @@ int main(int argc, char *argv[])
 
                                std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                               std::cin.get();
+                               //std::cin.get();
                                /////////////////////////
 
                                //////////////////// Set target position(10000)
-                                  m.ID = 0x67F;//CANid + 0x67F;
+                                  m.ID = 0x60B;//CANid + 0x60B;
                                   m.MSGTYPE = 0x00;
                                   m.LEN = 8;
                                   m.DATA[0] = 0x22;
@@ -316,11 +316,11 @@ int main(int argc, char *argv[])
 
                                   std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                                  std::cin.get();
+                                  //std::cin.get();
                                   /////////////////////////
 
                                   //////////////////// Set point absolute
-                                     m.ID = 0x67F;//CANid + 0x67F;
+                                     m.ID = 0x60B;//CANid + 0x60B;
                                      m.MSGTYPE = 0x00;
                                      m.LEN = 8;
                                      m.DATA[0] = 0x22;
@@ -335,9 +335,9 @@ int main(int argc, char *argv[])
 
                                      std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                                     std::cin.get();
+                                     //std::cin.get();
 
-                                     m.ID = 0x67F;//CANid + 0x67F;
+                                     m.ID = 0x60B;//CANid + 0x60B;
                                      m.MSGTYPE = 0x00;
                                      m.LEN = 8;
                                      m.DATA[0] = 0x22;
@@ -352,14 +352,14 @@ int main(int argc, char *argv[])
 
                                      std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                                     std::cin.get();
+                                     //std::cin.get();
                                      /////////////////////////
                             std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
                             ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
                             //////////////////// Set speed(10000)
-                               m.ID = 0x67F;//CANid + 0x67F;
+                               m.ID = 0x60B;//CANid + 0x60B;
                                m.MSGTYPE = 0x00;
                                m.LEN = 8;
                                m.DATA[0] = 0x22;
@@ -374,11 +374,11 @@ int main(int argc, char *argv[])
 
                                std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                               std::cin.get();
+                               //std::cin.get();
                                /////////////////////////
 
                                //////////////////// Set target position(3000)
-                                  m.ID = 0x67F;//CANid + 0x67F;
+                                  m.ID = 0x60B;//CANid + 0x60B;
                                   m.MSGTYPE = 0x00;
                                   m.LEN = 8;
                                   m.DATA[0] = 0x22;
@@ -393,11 +393,11 @@ int main(int argc, char *argv[])
 
                                   std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                                  std::cin.get();
+                                  //std::cin.get();
                                   /////////////////////////
 
                                   //////////////////// Set point absolute
-                                     m.ID = 0x67F;//CANid + 0x67F;
+                                     m.ID = 0x60B;//CANid + 0x60B;
                                      m.MSGTYPE = 0x00;
                                      m.LEN = 8;
                                      m.DATA[0] = 0x22;
@@ -412,9 +412,9 @@ int main(int argc, char *argv[])
 
                                      std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                                     std::cin.get();
+                                     //std::cin.get();
 
-                                     m.ID = 0x67F;//CANid + 0x67F;
+                                     m.ID = 0x60B;//CANid + 0x60B;
                                      m.MSGTYPE = 0x00;
                                      m.LEN = 8;
                                      m.DATA[0] = 0x22;
@@ -429,14 +429,14 @@ int main(int argc, char *argv[])
 
                                      std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                                     std::cin.get();
+                                     //std::cin.get();
                                      /////////////////////////
                             std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
                             ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
                             //////////////////// Set speed(10000)
-                               m.ID = 0x67F;//CANid + 0x67F;
+                               m.ID = 0x60B;//CANid + 0x60B;
                                m.MSGTYPE = 0x00;
                                m.LEN = 8;
                                m.DATA[0] = 0x22;
@@ -451,11 +451,11 @@ int main(int argc, char *argv[])
 
                                std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                               std::cin.get();
+                               //std::cin.get();
                                /////////////////////////
 
                                //////////////////// Set target position(7000)
-                                  m.ID = 0x67F;//CANid + 0x67F;
+                                  m.ID = 0x60B;//CANid + 0x60B;
                                   m.MSGTYPE = 0x00;
                                   m.LEN = 8;
                                   m.DATA[0] = 0x22;
@@ -470,11 +470,11 @@ int main(int argc, char *argv[])
 
                                   std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                                  std::cin.get();
+                                  //std::cin.get();
                                   /////////////////////////
 
                                   //////////////////// Set point absolute
-                                     m.ID = 0x67F;//CANid + 0x67F;
+                                     m.ID = 0x60B;//CANid + 0x60B;
                                      m.MSGTYPE = 0x00;
                                      m.LEN = 8;
                                      m.DATA[0] = 0x22;
@@ -489,9 +489,9 @@ int main(int argc, char *argv[])
 
                                      std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                                     std::cin.get();
+                                     //std::cin.get();
 
-                                     m.ID = 0x67F;//CANid + 0x67F;
+                                     m.ID = 0x60B;//CANid + 0x60B;
                                      m.MSGTYPE = 0x00;
                                      m.LEN = 8;
                                      m.DATA[0] = 0x22;
@@ -506,9 +506,32 @@ int main(int argc, char *argv[])
 
                                      std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                                     std::cin.get();
+                                     //std::cin.get();
                                      /////////////////////////
                             std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+                            
+                            //0x67F 0x40 0xA0 0x20 0x00 0x00 0x00 0x00 0x00
+                            
+                             m.ID = 0x60B;//CANid + 0x60B;
+                                     m.MSGTYPE = 0x00;
+                                     m.LEN = 8;
+                                     m.DATA[0] = 0x40;
+                                     m.DATA[1] = 0xA0;
+                                     m.DATA[2] = 0x20;
+                                     m.DATA[3] = 0x00;
+                                     m.DATA[4] = 0x00;
+                                     m.DATA[5] = 0x00;
+                                     m.DATA[6] = 0x00;
+                                     m.DATA[7] = 0x00;
+                                     CAN_Write(canopen::h, &m);
+
+                                     std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+                            TPCANRdMsg ms;
+            errno = LINUX_CAN_Read(canopen::h, &ms);
+            if (errno)
+                perror("LINUX_CAN_Read() error");
+                            
 
 
 }
