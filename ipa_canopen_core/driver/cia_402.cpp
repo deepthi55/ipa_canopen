@@ -524,11 +524,11 @@ std::map<std::string, std::thread> manager_threads;
 
 void cia_402::statusword_incoming(uint8_t CANid, BYTE data[8], cia_402::device_group_ptr devGroup)
 {
-    std::cout << "CALLED" << std::endl;
+    std::cout << "CALLED1" << std::endl;
 
     uint16_t mydata_low = data[4];
     uint16_t mydata_high = data[5];
-
+    std::cout << "CALLED2" << std::endl;
     bool ready_switch_on = mydata_low & 0x01;
     bool switched_on = mydata_low & 0x02;
     bool op_enable = mydata_low & 0x04;
@@ -546,9 +546,14 @@ void cia_402::statusword_incoming(uint8_t CANid, BYTE data[8], cia_402::device_g
     bool op_specific1 = mydata_high & 0x20;
     bool man_specific1 = mydata_high & 0x40;
     bool man_specific2 = mydata_high & 0x80;
-
+    std::cout << "CALLED3" << std::endl;
 
     bool ip_mode = op_specific & volt_enable;
+
+    std::cout << devGroup->getDevices()[CANid] << std::endl;
+
+std::cout << "CALLED4" << std::endl;
+
 
 
     if(!ready_switch_on)
@@ -592,7 +597,7 @@ void cia_402::statusword_incoming(uint8_t CANid, BYTE data[8], cia_402::device_g
     if(fault & op_enable & switched_on & ready_switch_on)
        devGroup->getDevices()[CANid]->deviceStateMachine(MS_FAULT_REACTION_ACTIVE);
 
-
+std::cout << "CALLED5" << std::endl;
 
    devGroup->getDevices()[CANid]->setFault(fault);
    devGroup->getDevices()[CANid]->setHoming(op_specific);

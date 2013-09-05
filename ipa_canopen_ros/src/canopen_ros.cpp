@@ -87,6 +87,22 @@ std::map<std::string, JointLimits> joint_limits_;
 std::vector<std::string> chainNames;
 std::vector<std::string> jointNames;
 
+cia_402 *group1 = new cia_402();
+
+//std::map <uint8_t,cia_402::DeviceGroup::device_ptr> devs;
+
+//    cia_402::DeviceGroup::device_ptr device(new cia_402::Device(CANid) );
+
+//    cia_402::device_group_ptr dgroup(new cia_402::DeviceGroup("name"));
+//    group1->updatedeviceGroups("name", dgroup);
+
+//    devs[CANid] = device;
+
+//    group1->getdeviceGroups()["name"]->setDevices(devs);
+//    group1->getdeviceGroups()["name"]->setDeviceFile(deviceFile);
+//    group1->getdeviceGroups()["name"]->setFirstInit(true);
+
+
 /***************************************************************/
 //			This function is responsible for the init callback
 //          related to the specific DeviceGroup
@@ -96,28 +112,28 @@ bool CANopenInit(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &r
 {
 
 
-    std::string deviceFile =cia_402::deviceGroups[chainName].getDeviceFile();
+    std::string deviceFile =group1->getdeviceGroups()[chainName]->getDeviceFile();
 
-    cia_402::init(chainName, std::chrono::milliseconds(cia_402::deviceGroups[chainName].getSyncInterval()));
+    group1->init(group1->getdeviceGroups()[chainName], std::chrono::milliseconds(group1->getdeviceGroups()[chainName]->getSyncInterval()));
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    for (auto device : cia_402::deviceGroups[chainName].getDevices())
+    for (auto device : group1->getdeviceGroups()[chainName]->getDevices())
     {
-        canopen::sendSDO(device.second->getCANid(), cia_402::MODES_OF_OPERATION, cia_402::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE, deviceFile);
+        canopen::sendSDO(device.second->getCANid(), MODES_OF_OPERATION, MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE, deviceFile);
         std::cout << "Setting IP mode for: " << (uint16_t)device.second->getCANid() << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    cia_402::manager_threads[chainName] = std::thread(cia_402::deviceManager,chainName);
+    group1->manager_threads[chainName] = std::thread(cia_402::deviceManager,group1->getdeviceGroups()[chainName]);
 
-    cia_402::manager_threads[chainName].detach();
+    group1->manager_threads[chainName].detach();
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
 
-    for (auto device : cia_402::deviceGroups[chainName].getDevices())
+    for (auto device : group1->getdeviceGroups()[chainName]->getDevices())
     {
 
        // if(device.second.getHomingError())
@@ -126,8 +142,8 @@ bool CANopenInit(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &r
         device.second->setDesiredPos((double)device.second->getActualPos());
         device.second->setDesiredVel(0);
 
-        cia_402::sendPos(device.first, (double)device.second->getDesiredPos(), chainName);
-        cia_402::sendPos(device.first, (double)device.second->getDesiredPos(), chainName);
+        group1->sendPos(device.first, (double)device.second->getDesiredPos(), group1->getdeviceGroups()[chainName]);
+        group1->sendPos(device.first, (double)device.second->getDesiredPos(), group1->getdeviceGroups()[chainName]);
 
         device.second->setInitialized(true);
 
@@ -149,21 +165,21 @@ bool CANopenInit(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &r
 bool CANopenRecover(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &res, std::string chainName)
 {
 
-    std::string deviceFile =cia_402::deviceGroups[chainName].getDeviceFile();
+    std::string deviceFile =group1->getdeviceGroups()[chainName]->getDeviceFile();
 
-    cia_402::recover(chainName,  std::chrono::milliseconds(cia_402::deviceGroups[chainName].getSyncInterval()));
+    group1->recover(group1->getdeviceGroups()[chainName],  std::chrono::milliseconds(group1->getdeviceGroups()[chainName]->getSyncInterval()));
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 
-    for (auto device : cia_402::deviceGroups[chainName].getDevices())
+    for (auto device : group1->getdeviceGroups()[chainName]->getDevices())
     {
-        canopen::sendSDO(device.second->getCANid(), cia_402::MODES_OF_OPERATION, cia_402::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE, deviceFile);
+        canopen::sendSDO(device.second->getCANid(), MODES_OF_OPERATION, MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE, deviceFile);
         std::cout << "Setting IP mode for: " << (uint16_t)device.second->getCANid() << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
 
-    for (auto device : cia_402::deviceGroups[chainName].getDevices())
+    for (auto device : group1->getdeviceGroups()[chainName]->getDevices())
     {
 
        // if(device.second.getHomingError())
@@ -172,8 +188,8 @@ bool CANopenRecover(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response
         device.second->setDesiredPos((double)device.second->getActualPos());
         device.second->setDesiredVel(0);
 
-        cia_402::sendPos(device.first, (double)device.second->getDesiredPos(), chainName);
-        cia_402::sendPos(device.first, (double)device.second->getDesiredPos(), chainName);
+        group1->sendPos(device.first, (double)device.second->getDesiredPos(), group1->getdeviceGroups()[chainName]);
+        group1->sendPos(device.first, (double)device.second->getDesiredPos(), group1->getdeviceGroups()[chainName]);
 
         device.second->setInitialized(true);
 
@@ -203,7 +219,7 @@ bool setOperationModeCallback(cob_srvs::SetOperationMode::Request &req, cob_srvs
 
 void setVel(const brics_actuator::JointVelocities &msg, std::string chainName)
 {
-    if (! cia_402::deviceGroups[chainName].atFirstInit() & !cia_402::deviceGroups[chainName].rActive())
+    if (! group1->getdeviceGroups()[chainName]->atFirstInit() & !group1->getdeviceGroups()[chainName]->rActive())
     {
         std::vector<double> velocities;
         std::vector<double> positions;
@@ -214,7 +230,7 @@ void setVel(const brics_actuator::JointVelocities &msg, std::string chainName)
             velocities.push_back( it.value);
         }
 
-        for (auto device : cia_402::deviceGroups[chainName].getDevices())
+        for (auto device : group1->getdeviceGroups()[chainName]->getDevices())
         {
             positions.push_back((double)device.second->getDesiredPos());
         }
@@ -223,7 +239,7 @@ void setVel(const brics_actuator::JointVelocities &msg, std::string chainName)
         //joint_limits_[chainName].checkVelocityLimits(velocities);
         //joint_limits_[chainName].checkPositionLimits(velocities, positions);
 
-        cia_402::deviceGroups[chainName].setVel(velocities);
+        group1->getdeviceGroups()[chainName]->setVel(velocities);
     }
 }
 
@@ -251,11 +267,17 @@ void readParamsFromParameterServer(ros::NodeHandle n)
     for (int i=0; i<busParams.size(); i++)
     {
 
+
+
         auto name = static_cast<std::string>(busParams[i]["name"]);
-        cia_402::deviceGroups[name].setFirstInit(true);
-        cia_402::deviceGroups[name].setBaudRate(static_cast<std::string>(busParams[i]["baudrate"]));
-        cia_402::deviceGroups[name].setSyncInterval(static_cast<int>(busParams[i]["sync_interval"]));
-        cia_402::deviceGroups[name].setDeviceFile(static_cast<std::string>(busParams[i]["device_file"]));
+
+        cia_402::device_group_ptr dgroup(new cia_402::DeviceGroup(name));
+        group1->updatedeviceGroups(name, dgroup);
+
+        group1->getdeviceGroups()[name]->setFirstInit(true);
+        group1->getdeviceGroups()[name]->setBaudRate(static_cast<std::string>(busParams[i]["baudrate"]));
+        group1->getdeviceGroups()[name]->setSyncInterval(static_cast<int>(busParams[i]["sync_interval"]));
+        group1->getdeviceGroups()[name]->setDeviceFile(static_cast<std::string>(busParams[i]["device_file"]));
         // Reading the chains from the canopenmaster configuration
         chainNames.push_back(static_cast<std::string>(chainNames_XMLRPC[i]));
         std::cout << chainNames[i] << std::endl;
@@ -266,8 +288,6 @@ void readParamsFromParameterServer(ros::NodeHandle n)
 
     for (int cN=0; cN<chainNames_XMLRPC.size(); cN++)
     {
-
-        std::map<uint8_t, canopen::Device> devs;
         jointNames.clear();
         XmlRpc::XmlRpcValue jointNames_XMLRPC;
         n.getParam("/" + chainNames[cN] + "/joint_names", jointNames_XMLRPC);
@@ -299,14 +319,14 @@ void readParamsFromParameterServer(ros::NodeHandle n)
         }
 
 
-        XmlRpc::XmlRpcValue device_files_XMLRPC;
-        n.getParam("/" + chainNames[cN] + "/device_files", device_files_XMLRPC);
-        std::vector<std::string> device_files;
-        for (int i=0; i<device_files_XMLRPC.size(); i++)
-        {
-            device_files.push_back(static_cast<std::string>(device_files_XMLRPC[i]));
-            std::cout << device_files_XMLRPC[i] << std::endl;
-        }
+//        XmlRpc::XmlRpcValue device_files_XMLRPC;
+//        n.getParam("/" + chainNames[cN] + "/device_files", device_files_XMLRPC);
+//        std::vector<std::string> device_files;
+//        for (int i=0; i<device_files_XMLRPC.size(); i++)
+//        {
+//            device_files.push_back(static_cast<std::string>(device_files_XMLRPC[i]));
+//            std::cout << device_files_XMLRPC[i] << std::endl;
+//        }
 
         std::map <uint8_t, cia_402::DeviceGroup::device_ptr> dev_vec;
 
@@ -314,13 +334,13 @@ void readParamsFromParameterServer(ros::NodeHandle n)
         {
             cia_402::DeviceGroup::device_ptr device(new cia_402::Device(moduleIDs[i], jointNames[i], chainNames[cN], devices[i]) );
             dev_vec [moduleIDs[i]] = device;
-            std::cout << moduleIDs[i]<<  jointNames[i]<< chainNames[cN]<< devices[i] << std::endl;
+            std::cout << (uint16_t)moduleIDs[i]<<  jointNames[i]<< chainNames[cN]<< devices[i] << std::endl;
         }
         auto name = static_cast<std::string>(busParams[cN]["name"]);
 
-        cia_402::deviceGroups[name].setDevices(dev_vec);
-        cia_402::deviceGroups[name].setCANids(moduleIDs);
-        cia_402::deviceGroups[name].setNames(jointNames);
+        group1->getdeviceGroups()[name]->setDevices(dev_vec);
+        group1->getdeviceGroups()[name]->setCANids(moduleIDs);
+        group1->getdeviceGroups()[name]->setNames(jointNames);
 
     }
 
@@ -336,9 +356,9 @@ int main(int argc, char **argv)
 
     readParamsFromParameterServer(n);
 
-    for (auto dg : cia_402::deviceGroups)
+    for (auto dg : group1->getdeviceGroups())
     {
-        std::string deviceFile = dg.second.getDeviceFile();
+        std::string deviceFile = dg.second->getDeviceFile();
 
         std::cout << deviceFile << std::endl;
 
@@ -353,22 +373,23 @@ int main(int argc, char **argv)
         }
 
 
-        cia_402::pre_init(dg.first);
+        group1->pre_init(dg.second);
     }
 
     /********************************************/
 
        // add custom PDOs:
-       cia_402::sendPos = cia_402::defaultPDOOutgoing;
+       group1->sendPos = cia_402::defaultPDOOutgoing;
 
-       for (auto dg : cia_402::deviceGroups)
+
+
+       for (auto dg : group1->getdeviceGroups())
        {
            std::string chainName = dg.first;
-
-           for (auto it : dg.second.getDevices())
+            group1->incomingDataHandlers[ STATUSWORD ] = [&](const uint8_t CANid, BYTE data[8], cia_402::device_group_ptr group) { cia_402::statusword_incoming(CANid, data, group1->getdeviceGroups()[chainName] ); };
+           for (auto it : dg.second->getDevices())
            {
-               cia_402::incomingPDOHandlers[ 0x180 + it.first ] = [it](const TPCANRdMsg m, std::string chainName) { cia_402::defaultPDO_incoming( it.first, m, chainName ); };
-               cia_402::incomingEMCYHandlers[ 0x081 + it.first ] = [it](const TPCANRdMsg mE, std::string chainName) { cia_402::defaultPDO_incoming( it.first, mE, chainName ); };
+               group1->incomingPDOHandlers[ 0x180 + it.first ] = [&](const TPCANRdMsg m, cia_402::device_group_ptr group) { cia_402::defaultPDO_incoming(it.first, m, group1->getdeviceGroups()[chainName] ); };
            }
        }
 
@@ -399,7 +420,7 @@ int main(int argc, char **argv)
     //			Configuring the ROS Node and Initializing the callbacks
     /***************************************************************/
 
-    for (auto it : cia_402::deviceGroups)
+    for (auto it : group1->getdeviceGroups())
       {
           ROS_INFO("Configuring %s", it.first.c_str());
 
@@ -428,23 +449,23 @@ int main(int argc, char **argv)
       //Main ROS Loop
       while (ros::ok())
       {
-        for (auto dg : cia_402::deviceGroups)
+        for (auto dg : group1->getdeviceGroups())
         {
             sensor_msgs::JointState js;
-            dg.second.getNames();
-            js.name = dg.second.getNames();
+            dg.second->getNames();
+            js.name = dg.second->getNames();
             js.header.stamp = ros::Time::now(); // todo: possibly better use timestamp of hardware msg?
-            js.position = dg.second.getActualPos();
-            js.velocity = dg.second.getActualVel();
-            js.effort = std::vector<double>(dg.second.getNames().size(), 0.0);
+            js.position = dg.second->getActualPos();
+            js.velocity = dg.second->getActualVel();
+            js.effort = std::vector<double>(dg.second->getNames().size(), 0.0);
             jointStatesPublisher.publish(js);
 
             pr2_controllers_msgs::JointTrajectoryControllerState jtcs;
             jtcs.header.stamp = js.header.stamp;
             jtcs.actual.positions = js.position;
             jtcs.actual.velocities = js.velocity;
-            jtcs.desired.positions = dg.second.getDesiredPos();
-            jtcs.desired.velocities = dg.second.getDesiredVel();
+            jtcs.desired.positions = dg.second->getDesiredPos();
+            jtcs.desired.velocities = dg.second->getDesiredVel();
             statePublishers[dg.first].publish(jtcs);
 
             std_msgs::String opmode;
@@ -466,7 +487,7 @@ int main(int argc, char **argv)
 
             diagnostics.status.resize(1);
 
-            for (auto device : dg.second.getDevices())
+            for (auto device : dg.second->getDevices())
             {
 
             //ROS_INFO("Name %s", name.c_str() );
