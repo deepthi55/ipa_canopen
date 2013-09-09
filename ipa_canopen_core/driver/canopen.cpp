@@ -516,7 +516,7 @@ namespace canopen{
     void defaultPDOOutgoing(uint16_t CANid, double positionValue) {
         static const uint16_t myControlword = (CONTROLWORD_ENABLE_OPERATION | CONTROLWORD_ENABLE_IP_MODE);
         TPCANMsg msg;
-        msg.ID = 0x300 + CANid;
+        msg.ID = 0x200 + CANid;
         msg.MSGTYPE = 0x00;
         msg.LEN = 8;
         msg.DATA[0] = myControlword & 0xFF;
