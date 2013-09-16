@@ -29,7 +29,8 @@ int main(int argc, char *argv[]) {
 	uint16_t CANid = std::stoi(std::string(argv[2]));
 	canopen::syncInterval = std::chrono::milliseconds(std::stoi(std::string(argv[3])));
 	double targetVel = std::stod(std::string(argv[4]));
-	double accel = std::stod(std::string(argv[5]));
+    double accel = std::stod(std::string(argv[5]));
+
 
 	//std::cout << deviceFile << std::endl;
 	//std::cout << CANid << std::endl;
@@ -38,31 +39,190 @@ int main(int argc, char *argv[]) {
 	//std::cout << accel << std::endl;
 
 	canopen::devices[ CANid ] = canopen::Device(CANid);
-    canopen::incomingPDOHandlers[ 0x480 + CANid ] = [CANid](const TPCANRdMsg m) { canopen::defaultPDO_incoming( CANid, m ); };
+    canopen::incomingPDOHandlers[ 0x480 + CANid ] = [CANid](const TPCANRdMsg m) { canopen::defaultPDO_incoming_pos_elmo( CANid, m ); };
+    canopen::incomingPDOHandlers[ 0x180 + CANid ] = [CANid](const TPCANRdMsg m) { canopen::defaultPDO_incoming_status_elmo( CANid, m ); };
     canopen::sendPos = canopen::defaultPDOOutgoing;
 
+
+
 	canopen::init(deviceFile, canopen::syncInterval);
+
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-  	canopen::sendSDO(CANid, canopen::MODES_OF_OPERATION, (uint8_t)canopen::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE);
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    TPCANMsg m;
+
+
+       //////////////////// Enable tpdo4
+          m.ID =0x60B;
+          m.MSGTYPE = 0x00;
+          m.LEN = 8;
+          m.DATA[0] = 0x22;
+          m.DATA[1] = 0x03;
+          m.DATA[2] = 0x18;
+          m.DATA[3] = 0x01;
+          m.DATA[4] = 0x8B;
+          m.DATA[5] = 0x04;
+          m.DATA[6] = 0x00;
+          m.DATA[7] = 0x80;
+          CAN_Write(canopen::h, &m);
+
+          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+          /////////////////////////
+
+    //////////////////// clear mapping
+       m.ID =0x60B;
+       m.MSGTYPE = 0x00;
+       m.LEN = 8;
+       m.DATA[0] = 0x2F;
+       m.DATA[1] = 0x03;
+       m.DATA[2] = 0x1A;
+       m.DATA[3] = 0x00;
+       m.DATA[4] = 0x00;
+       m.DATA[5] = 0x00;
+       m.DATA[6] = 0x00;
+       m.DATA[7] = 0x00;
+       CAN_Write(canopen::h, &m);
+
+       std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+       /////////////////////////
+
+       //////////////////// sub ind1=63
+          m.ID =0x60B;
+          m.MSGTYPE = 0x00;
+          m.LEN = 8;
+          m.DATA[0] = 0x2F;
+          m.DATA[1] = 0x03;
+          m.DATA[2] = 0x1A;
+          m.DATA[3] = 0x01;
+          m.DATA[4] = 0x20;
+          m.DATA[5] = 0x00;
+          m.DATA[6] = 0x63;
+          m.DATA[7] = 0x60;
+          CAN_Write(canopen::h, &m);
+
+          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+          /////////////////////////
+
+
+          //////////////////// sub ind2=69
+             m.ID =0x60B;
+             m.MSGTYPE = 0x00;
+             m.LEN = 8;
+             m.DATA[0] = 0x2F;
+             m.DATA[1] = 0x03;
+             m.DATA[2] = 0x1A;
+             m.DATA[3] = 0x02;
+             m.DATA[4] = 0x20;
+             m.DATA[5] = 0x00;
+             m.DATA[6] = 0x69;
+             m.DATA[7] = 0x60;
+             CAN_Write(canopen::h, &m);
+
+             std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+             /////////////////////////
+
+
+             //////////////////// ASync
+                m.ID =0x60B;
+                m.MSGTYPE = 0x00;
+                m.LEN = 8;
+                m.DATA[0] = 0x2F;
+                m.DATA[1] = 0x03;
+                m.DATA[2] = 0x18;
+                m.DATA[3] = 0x02;
+                m.DATA[4] = 0xFF;
+                m.DATA[5] = 0x00;
+                m.DATA[6] = 0x00;
+                m.DATA[7] = 0x00;
+                CAN_Write(canopen::h, &m);
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+                //////////////////////
+                ///
+                ///
+                /////////////////////// Mapping 2 objects
+                      m.ID =0x60B;
+                      m.MSGTYPE = 0x00;
+                      m.LEN = 8;
+                      m.DATA[0] = 0x2F;
+                      m.DATA[1] = 0x03;
+                      m.DATA[2] = 0x1A;
+                      m.DATA[3] = 0x00;
+                      m.DATA[4] = 0x02;
+                      m.DATA[5] = 0x00;
+                      m.DATA[6] = 0x00;
+                      m.DATA[7] = 0x00;
+                      CAN_Write(canopen::h, &m);
+
+                      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+                      /////////////////////////
+
+                      //////////////////// Enable tpdo4
+                         m.ID =0x60B;
+                         m.MSGTYPE = 0x00;
+                         m.LEN = 8;
+                         m.DATA[0] = 0x22;
+                         m.DATA[1] = 0x03;
+                         m.DATA[2] = 0x18;
+                         m.DATA[3] = 0x01;
+                         m.DATA[4] = 0x8B;
+                         m.DATA[5] = 0x04;
+                         m.DATA[6] = 0x00;
+                         m.DATA[7] = 0x00;
+                         CAN_Write(canopen::h, &m);
+
+                         std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+                         /////////////////////////
+
+                         //////////////////// Enable tpdo4
+                            m.ID =0x60B;
+                            m.MSGTYPE = 0x00;
+                            m.LEN = 8;
+                            m.DATA[0] = 0x2F;
+                            m.DATA[1] = 0x20;
+                            m.DATA[2] = 0x2F;
+                            m.DATA[3] = 0x04;
+                            m.DATA[4] = 0x00;
+                            m.DATA[5] = 0x00;
+                            m.DATA[6] = 0x00;
+                            m.DATA[7] = 0x01;
+                            CAN_Write(canopen::h, &m);
+
+                            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+//CHANGED FROM INTERPOLATED
+//    canopen::sendSDO(CANid, canopen::MODES_OF_OPERATION, (uint8_t)canopen::MODES_OF_OPERATION_PROFILE_VELOCITY_MODE);
+//    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+
+
+       std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
 	canopen::initDeviceManagerThread(canopen::deviceManager);
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	canopen::devices[CANid].setInitialized(true);
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-	//std::cout << "sending Statusword request" << std::endl;
-	//canopen::sendSDO(CANid, canopen::STATUSWORD);
-	//std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-	/*std::cout << "\t\t\t\tNMTState: " << canopen::devices[CANid].getNMTState() << std::endl;
-	std::cout << "\t\t\t\tMotorState: " << canopen::devices[CANid].getMotorState() << std::endl;
-	std::cout << "\t\t\t\tCANid: " << (uint16_t)canopen::devices[CANid].getCANid() << std::endl;
-	std::cout << "\t\t\t\tActualPos: " << canopen::devices[CANid].getActualPos() << std::endl;
-	std::cout << "\t\t\t\tDesiredPos: " << canopen::devices[CANid].getDesiredPos() << std::endl;
-	std::cout << "\t\t\t\tActualVel: " << canopen::devices[CANid].getActualVel() << std::endl;
-	std::cout << "\t\t\t\tDesiredVel: " << canopen::devices[CANid].getDesiredVel() << std::endl;*/
+
+    //std::cout << "sending Statusword request" << std::endl;
+    //canopen::sendSDO(CANid, canopen::STATUSWORD);
+    //std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    /*std::cout << "\t\t\t\tNMTState: " << canopen::devices[CANid].getNMTState() << std::endl;
+    std::cout << "\t\t\t\tMotorState: " << canopen::devices[CANid].getMotorState() << std::endl;
+    std::cout << "\t\t\t\tCANid: " << (uint16_t)canopen::devices[CANid].getCANid() << std::endl;
+    std::cout << "\t\t\t\tActualPos: " << canopen::devices[CANid].getActualPos() << std::endl;
+    std::cout << "\t\t\t\tDesiredPos: " << canopen::devices[CANid].getDesiredPos() << std::endl;
+    std::cout << "\t\t\t\tActualVel: " << canopen::devices[CANid].getActualVel() << std::endl;
+    std::cout << "\t\t\t\tDesiredVel: " << canopen::devices[CANid].getDesiredVel() << std::endl;*/
 
 	// rest of the code is for moving the device:
 	if (accel != 0) {  // accel of 0 means "move at target vel immediately"
@@ -78,21 +238,22 @@ int main(int argc, char *argv[]) {
 			vel = accel * 0.000001 * std::chrono::duration_cast<std::chrono::microseconds>(tic-startTime).count();
 			canopen::devices[ CANid ].setDesiredVel(vel);
 			std::this_thread::sleep_for(canopen::syncInterval - (std::chrono::high_resolution_clock::now() - tic));
-            canopen::sendSync();
+            //canopen::sendSync();
+
 		}
 	}
 
 	// constant velocity when target vel has been reached:
 	std::cout << "Target velocity reached!" << std::endl;
 
-	/*canopen::devices[ CANid ].setDesiredVel(targetVel);
-	std::cout << "\t\t\t\t\t\tNMTState: " << canopen::devices[CANid].getNMTState() << std::endl;
-	std::cout << "\t\t\t\t\t\tMotorState: " << canopen::devices[CANid].getMotorState() << std::endl;
-	std::cout << "\t\t\t\t\t\tCANid: " << (uint16_t)canopen::devices[CANid].getCANid() << std::endl;
-	std::cout << "\t\t\t\t\t\tActualPos: " << canopen::devices[CANid].getActualPos() << std::endl;
-	std::cout << "\t\t\t\t\t\tDesiredPos: " << canopen::devices[CANid].getDesiredPos() << std::endl;
-	std::cout << "\t\t\t\t\t\tActualVel: " << canopen::devices[CANid].getActualVel() << std::endl;
-	std::cout << "\t\t\t\t\t\tDesiredVel: " << canopen::devices[CANid].getDesiredVel() << std::endl;*/
+    /*canopen::devices[ CANid ].setDesiredVel(targetVel);
+    std::cout << "\t\t\t\t\t\tNMTState: " << canopen::devices[CANid].getNMTState() << std::endl;
+    std::cout << "\t\t\t\t\t\tMotorState: " << canopen::devices[CANid].getMotorState() << std::endl;
+    std::cout << "\t\t\t\t\t\tCANid: " << (uint16_t)canopen::devices[CANid].getCANid() << std::endl;
+    std::cout << "\t\t\t\t\t\tActualPos: " << canopen::devices[CANid].getActualPos() << std::endl;
+    std::cout << "\t\t\t\t\t\tDesiredPos: " << canopen::devices[CANid].getDesiredPos() << std::endl;
+    std::cout << "\t\t\t\t\t\tActualVel: " << canopen::devices[CANid].getActualVel() << std::endl;
+    std::cout << "\t\t\t\t\t\tDesiredVel: " << canopen::devices[CANid].getDesiredVel() << std::endl;*/
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	//std::cout << "sending Statusword request" << std::endl;

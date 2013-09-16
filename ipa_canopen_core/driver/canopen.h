@@ -731,6 +731,8 @@ namespace canopen{
 
     void defaultPDOOutgoing(uint16_t CANid, double positionValue);
     void defaultPDO_incoming(uint16_t CANid, const TPCANRdMsg m);
+    void defaultPDO_incoming_status_elmo(uint16_t CANid, const TPCANRdMsg m);
+    void defaultPDO_incoming_pos_elmo(uint16_t CANid, const TPCANRdMsg m);
     void defaultEMCY_incoming(uint16_t CANid, const TPCANRdMsg m);
 
     /***************************************************************/

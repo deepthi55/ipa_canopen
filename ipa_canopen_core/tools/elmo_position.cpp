@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-    std::cin.get();
+    //std::cin.get();
     /////////////////////////
 
     //////////////////// get mode display
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
 
        std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-       std::cin.get();
+       //std::cin.get();
        /////////////////////////
 
        //////////////////// get mode display
@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
 
           std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-          std::cin.get();
+          //std::cin.get();
           /////////////////////////
 
           //////////////////// Ready to switch on
@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
 
              std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-             std::cin.get();
+             //std::cin.get();
              /////////////////////////
 
              //////////////////// Read status
@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                std::cin.get();
+                //std::cin.get();
                 /////////////////////////
 
                 //////////////////// Switch on
@@ -218,7 +218,7 @@ int main(int argc, char *argv[])
 
                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                   std::cin.get();
+                   //std::cin.get();
                    /////////////////////////
 
                    //////////////////// Read status
@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
 
                       std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                      std::cin.get();
+                      //std::cin.get();
                       /////////////////////////
 
                       //////////////////// Start mo=1
@@ -256,7 +256,7 @@ int main(int argc, char *argv[])
 
                          std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                         std::cin.get();
+                         //std::cin.get();
                          /////////////////////////
 
                          //////////////////// Read status
@@ -275,7 +275,7 @@ int main(int argc, char *argv[])
 
                             std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                            std::cin.get();
+                            //std::cin.get();
                             /////////////////////////
 
 
@@ -297,7 +297,7 @@ int main(int argc, char *argv[])
 
                                std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                               std::cin.get();
+                               //std::cin.get();
                                /////////////////////////
 
                                //////////////////// Set target position(10000)
@@ -316,26 +316,10 @@ int main(int argc, char *argv[])
 
                                   std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                                  std::cin.get();
+                                  //std::cin.get();
                                   /////////////////////////
 
-                                  //////////////////// Set point absolute
-                                     m.ID = 0x60B;//CANid + 0x60B;
-                                     m.MSGTYPE = 0x00;
-                                     m.LEN = 8;
-                                     m.DATA[0] = 0x22;
-                                     m.DATA[1] = 0x40;
-                                     m.DATA[2] = 0x60;
-                                     m.DATA[3] = 0x00;
-                                     m.DATA[4] = 0x0f;
-                                     m.DATA[5] = 0x00;
-                                     m.DATA[6] = 0x00;
-                                     m.DATA[7] = 0x00;
-                                     CAN_Write(canopen::h, &m);
 
-                                     std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
-                                     std::cin.get();
 
                                      m.ID = 0x60B;//CANid + 0x60B;
                                      m.MSGTYPE = 0x00;
@@ -352,9 +336,26 @@ int main(int argc, char *argv[])
 
                                      std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                                     std::cin.get();
+                                     //std::cin.get();
                                      /////////////////////////
-                            std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+                                     //////////////////// Set point absolute
+                                        m.ID = 0x60B;//CANid + 0x60B;
+                                        m.MSGTYPE = 0x00;
+                                        m.LEN = 8;
+                                        m.DATA[0] = 0x22;
+                                        m.DATA[1] = 0x40;
+                                        m.DATA[2] = 0x60;
+                                        m.DATA[3] = 0x00;
+                                        m.DATA[4] = 0x0f;
+                                        m.DATA[5] = 0x00;
+                                        m.DATA[6] = 0x00;
+                                        m.DATA[7] = 0x00;
+                                        CAN_Write(canopen::h, &m);
+
+                                        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+                                        //std::cin.get();
+                                     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
                             ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -367,14 +368,14 @@ int main(int argc, char *argv[])
                                m.DATA[2] = 0x60;
                                m.DATA[3] = 0x00;
                                m.DATA[4] = 0x10;
-                               m.DATA[5] = 0x27;
+                               m.DATA[5] = 0x10;
                                m.DATA[6] = 0x00;
                                m.DATA[7] = 0x00;
                                CAN_Write(canopen::h, &m);
 
                                std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                               std::cin.get();
+                               //std::cin.get();
                                /////////////////////////
 
                                //////////////////// Set target position(3000)
@@ -393,7 +394,7 @@ int main(int argc, char *argv[])
 
                                   std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                                  std::cin.get();
+                                  //std::cin.get();
                                   /////////////////////////
 
                                   //////////////////// Set point absolute
@@ -412,7 +413,7 @@ int main(int argc, char *argv[])
 
                                      std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                                     std::cin.get();
+                                     //std::cin.get();
 
                                      m.ID = 0x60B;//CANid + 0x60B;
                                      m.MSGTYPE = 0x00;
@@ -429,7 +430,7 @@ int main(int argc, char *argv[])
 
                                      std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                                     std::cin.get();
+                                     //std::cin.get();
                                      /////////////////////////
                             std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
@@ -451,7 +452,7 @@ int main(int argc, char *argv[])
 
                                std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                               std::cin.get();
+                               //std::cin.get();
                                /////////////////////////
 
                                //////////////////// Set target position(7000)
@@ -470,7 +471,7 @@ int main(int argc, char *argv[])
 
                                   std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                                  std::cin.get();
+                                  //std::cin.get();
                                   /////////////////////////
 
                                   //////////////////// Set point absolute
@@ -489,7 +490,7 @@ int main(int argc, char *argv[])
 
                                      std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                                     std::cin.get();
+                                     //std::cin.get();
 
                                      m.ID = 0x60B;//CANid + 0x60B;
                                      m.MSGTYPE = 0x00;
@@ -506,7 +507,7 @@ int main(int argc, char *argv[])
 
                                      std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-                                     std::cin.get();
+                                     //std::cin.get();
                                      /////////////////////////
                             std::this_thread::sleep_for(std::chrono::milliseconds(2000));
                             

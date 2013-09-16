@@ -106,28 +106,34 @@ int main(int argc, char *argv[])
 
 
     TPCANMsg m;
+    ////////////////////
+       m.ID = 0x00;
+       m.MSGTYPE = 0x00;
+       m.LEN = 2;
+       m.DATA[0] = 0x01;
+       m.DATA[1] = 0x00;
+       CAN_Write(canopen::h, &m);
 
-// //////////////////// disable TPDO 4
-    m.ID = CANid + 0x600;
-    m.MSGTYPE = 0x00;
-    m.LEN = 8;
-    m.DATA[0] = 0x22;
-    m.DATA[1] = 0x03;
-    m.DATA[2] = 0x18;
-    m.DATA[3] = 0x01;
-    m.DATA[4] = 0x81;
-    m.DATA[5] = 0x04;
-    m.DATA[6] = 0x00;
-    m.DATA[7] = 0x80;
-    CAN_Write(canopen::h, &m);
+       //////////////////// Enable tpdo4
+          m.ID =0x60B;
+          m.MSGTYPE = 0x00;
+          m.LEN = 8;
+          m.DATA[0] = 0x22;
+          m.DATA[1] = 0x03;
+          m.DATA[2] = 0x18;
+          m.DATA[3] = 0x01;
+          m.DATA[4] = 0x8B;
+          m.DATA[5] = 0x04;
+          m.DATA[6] = 0x00;
+          m.DATA[7] = 0x80;
+          CAN_Write(canopen::h, &m);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+          std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-    std::cin.get();
-    /////////////////////////
+          /////////////////////////
 
     //////////////////// clear mapping
-       m.ID = CANid + 0x600;
+       m.ID =0x60B;
        m.MSGTYPE = 0x00;
        m.LEN = 8;
        m.DATA[0] = 0x2F;
@@ -141,11 +147,11 @@ int main(int argc, char *argv[])
        CAN_Write(canopen::h, &m);
 
        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-       std::cin.get();
+
        /////////////////////////
 
        //////////////////// sub ind1=63
-          m.ID = CANid + 0x600;
+          m.ID =0x60B;
           m.MSGTYPE = 0x00;
           m.LEN = 8;
           m.DATA[0] = 0x2F;
@@ -159,12 +165,12 @@ int main(int argc, char *argv[])
           CAN_Write(canopen::h, &m);
 
           std::this_thread::sleep_for(std::chrono::milliseconds(10));
-          std::cin.get();
+
           /////////////////////////
 
 
           //////////////////// sub ind2=69
-             m.ID = CANid + 0x600;
+             m.ID =0x60B;
              m.MSGTYPE = 0x00;
              m.LEN = 8;
              m.DATA[0] = 0x2F;
@@ -178,12 +184,12 @@ int main(int argc, char *argv[])
              CAN_Write(canopen::h, &m);
 
              std::this_thread::sleep_for(std::chrono::milliseconds(10));
-             std::cin.get();
+
              /////////////////////////
 
 
              //////////////////// ASync
-                m.ID = CANid + 0x600;
+                m.ID =0x60B;
                 m.MSGTYPE = 0x00;
                 m.LEN = 8;
                 m.DATA[0] = 0x2F;
@@ -197,12 +203,12 @@ int main(int argc, char *argv[])
                 CAN_Write(canopen::h, &m);
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                std::cin.get();
+
                 //////////////////////
                 ///
                 ///
                 /////////////////////// Mapping 2 objects
-                      m.ID = CANid + 0x600;
+                      m.ID =0x60B;
                       m.MSGTYPE = 0x00;
                       m.LEN = 8;
                       m.DATA[0] = 0x2F;
@@ -216,29 +222,29 @@ int main(int argc, char *argv[])
                       CAN_Write(canopen::h, &m);
 
                       std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                      std::cin.get();
+
                       /////////////////////////
 
                       //////////////////// Enable tpdo4
-                         m.ID = CANid + 0x600;
+                         m.ID =0x60B;
                          m.MSGTYPE = 0x00;
                          m.LEN = 8;
                          m.DATA[0] = 0x22;
                          m.DATA[1] = 0x03;
                          m.DATA[2] = 0x18;
                          m.DATA[3] = 0x01;
-                         m.DATA[4] = 0x81;
+                         m.DATA[4] = 0x8B;
                          m.DATA[5] = 0x04;
                          m.DATA[6] = 0x00;
                          m.DATA[7] = 0x00;
                          CAN_Write(canopen::h, &m);
 
                          std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                         std::cin.get();
+
                          /////////////////////////
 
                          //////////////////// Enable tpdo4
-                            m.ID = CANid + 0x600;
+                            m.ID =0x60B;
                             m.MSGTYPE = 0x00;
                             m.LEN = 8;
                             m.DATA[0] = 0x2F;
@@ -252,11 +258,160 @@ int main(int argc, char *argv[])
                             CAN_Write(canopen::h, &m);
 
                             std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                            std::cin.get();
-                            /////////////////////////
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//                            //Same thing for PDO3
+
+//                            // //////////////////// disable TPDO 4
+//                                m.ID = CANid + 0x600;
+//                                m.MSGTYPE = 0x00;
+//                                m.LEN = 8;
+//                                m.DATA[0] = 0x22;
+//                                m.DATA[1] = 0x03;
+//                                m.DATA[2] = 0x14;
+//                                m.DATA[3] = 0x01;
+//                                m.DATA[4] = 0x00 + CANid;
+//                                m.DATA[5] = 0x05;
+//                                m.DATA[6] = 0x00;
+//                                m.DATA[7] = 0x80;
+//                                CAN_Write(canopen::h, &m);
+
+//                                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+//                                std::cin.get();
+//                                /////////////////////////
+
+//                                //////////////////// clear mapping
+//                                   m.ID = CANid + 0x600;
+//                                   m.MSGTYPE = 0x00;
+//                                   m.LEN = 8;
+//                                   m.DATA[0] = 0x2F;
+//                                   m.DATA[1] = 0x03;
+//                                   m.DATA[2] = 0x16;
+//                                   m.DATA[3] = 0x00;
+//                                   m.DATA[4] = 0x00;
+//                                   m.DATA[5] = 0x00;
+//                                   m.DATA[6] = 0x00;
+//                                   m.DATA[7] = 0x00;
+//                                   CAN_Write(canopen::h, &m);
+
+//                                   std::this_thread::sleep_for(std::chrono::milliseconds(10));
+//                                   std::cin.get();
+//                                   /////////////////////////
+
+//                                   //////////////////// sub ind1=63
+//                                      m.ID = CANid + 0x600;
+//                                      m.MSGTYPE = 0x00;
+//                                      m.LEN = 8;
+//                                      m.DATA[0] = 0x2F;
+//                                      m.DATA[1] = 0x03;
+//                                      m.DATA[2] = 0x16;
+//                                      m.DATA[3] = 0x01;
+//                                      m.DATA[4] = 0x20;
+//                                      m.DATA[5] = 0x00;
+//                                      m.DATA[6] = 0x7A;
+//                                      m.DATA[7] = 0x60;
+//                                      CAN_Write(canopen::h, &m);
+
+//                                      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+//                                      std::cin.get();
+//                                      /////////////////////////
+
+//                                      //////////////////// sub ind1=63
+//                                         m.ID = CANid + 0x600;
+//                                         m.MSGTYPE = 0x00;
+//                                         m.LEN = 8;
+//                                         m.DATA[0] = 0x2F;
+//                                         m.DATA[1] = 0x03;
+//                                         m.DATA[2] = 0x16;
+//                                         m.DATA[3] = 0x02;
+//                                         m.DATA[4] = 0x20;
+//                                         m.DATA[5] = 0x00;
+//                                         m.DATA[6] = 0x81;
+//                                         m.DATA[7] = 0x60;
+//                                         CAN_Write(canopen::h, &m);
+
+//                                         std::this_thread::sleep_for(std::chrono::milliseconds(10));
+//                                         std::cin.get();
+//                                         /////////////////////////
 
 
 
+
+
+//                                         //////////////////// ASync
+//                                            m.ID = CANid + 0x600;
+//                                            m.MSGTYPE = 0x00;
+//                                            m.LEN = 8;
+//                                            m.DATA[0] = 0x2F;
+//                                            m.DATA[1] = 0x03;
+//                                            m.DATA[2] = 0x14;
+//                                            m.DATA[3] = 0x02;
+//                                            m.DATA[4] = 0x01;
+//                                            m.DATA[5] = 0x00;
+//                                            m.DATA[6] = 0x00;
+//                                            m.DATA[7] = 0x00;
+//                                            CAN_Write(canopen::h, &m);
+
+//                                            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+//                                            std::cin.get();
+//                                            //////////////////////
+//                                            ///
+//                                            ///
+//                                            /////////////////////// Mapping 2 objects
+//                                                  m.ID = CANid + 0x600;
+//                                                  m.MSGTYPE = 0x00;
+//                                                  m.LEN = 8;
+//                                                  m.DATA[0] = 0x2F;
+//                                                  m.DATA[1] = 0x03;
+//                                                  m.DATA[2] = 0x16;
+//                                                  m.DATA[3] = 0x00;
+//                                                  m.DATA[4] = 0x02;
+//                                                  m.DATA[5] = 0x00;
+//                                                  m.DATA[6] = 0x00;
+//                                                  m.DATA[7] = 0x00;
+//                                                  CAN_Write(canopen::h, &m);
+
+//                                                  std::this_thread::sleep_for(std::chrono::milliseconds(10));
+//                                                  std::cin.get();
+//                                                  /////////////////////////
+
+//                                                  //////////////////// Enable tpdo4
+//                                                     m.ID = CANid + 0x600;
+//                                                     m.MSGTYPE = 0x00;
+//                                                     m.LEN = 8;
+//                                                     m.DATA[0] = 0x22;
+//                                                     m.DATA[1] = 0x03;
+//                                                     m.DATA[2] = 0x14;
+//                                                     m.DATA[3] = 0x01;
+//                                                     m.DATA[4] = 0x00 + CANid;
+//                                                     m.DATA[5] = 0x05;
+//                                                     m.DATA[6] = 0x00;
+//                                                     m.DATA[7] = 0x00;
+//                                                     CAN_Write(canopen::h, &m);
+
+//                                                     std::this_thread::sleep_for(std::chrono::milliseconds(10));
+//                                                     std::cin.get();
+//                                                     /////////////////////////
+
+//                                                     //////////////////// Enable tpdo4
+//                                                        m.ID = CANid + 0x600;
+//                                                        m.MSGTYPE = 0x00;
+//                                                        m.LEN = 8;
+//                                                        m.DATA[0] = 0x2F;
+//                                                        m.DATA[1] = 0x20;
+//                                                        m.DATA[2] = 0x2F;
+//                                                        m.DATA[3] = 0x04;
+//                                                        m.DATA[4] = 0x00;
+//                                                        m.DATA[5] = 0x00;
+//                                                        m.DATA[6] = 0x00;
+//                                                        m.DATA[7] = 0x01;
+//                                                        CAN_Write(canopen::h, &m);
+
+//                                                        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+//                                                        std::cin.get();
+                                                        /////////////////////////
 
 
 }

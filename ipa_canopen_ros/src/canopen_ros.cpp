@@ -99,13 +99,13 @@ bool CANopenInit(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &r
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 
-    for (auto device : canopen::devices)
-    {
+//    for (auto device : canopen::devices)
+//    {
 
-        canopen::sendSDO(device.second.getCANid(), canopen::MODES_OF_OPERATION, canopen::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE);
-        std::cout << "Setting IP mode for: " << (uint16_t)device.second.getCANid() << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
+//        canopen::sendSDO(device.second.getCANid(), canopen::MODES_OF_OPERATION, canopen::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE);
+//        std::cout << "Setting IP mode for: " << (uint16_t)device.second.getCANid() << std::endl;
+//        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//    }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
@@ -135,7 +135,7 @@ bool CANopenRecover(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 
-    for (auto device : canopen::devices)
+    for (auto device : canopen::devices)z
     {
         canopen::sendSDO(device.second.getCANid(), canopen::MODES_OF_OPERATION, canopen::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE);
         std::cout << "Setting IP mode for: " << (uint16_t)device.second.getCANid() << std::endl;
@@ -185,8 +185,8 @@ void setVel(const brics_actuator::JointVelocities &msg, std::string chainName)
             positions.push_back((double)device.second.getDesiredPos());
         }
 
-        joint_limits_->checkVelocityLimits(velocities);
-        joint_limits_->checkPositionLimits(velocities, positions);
+        //joint_limits_->checkVelocityLimits(velocities);
+        //joint_limits_->checkPositionLimits(velocities, positions);
 
         canopen::deviceGroups[chainName].setVel(velocities);
     }
@@ -369,8 +369,9 @@ int main(int argc, char **argv)
     // add custom PDOs:
     canopen::sendPos = canopen::defaultPDOOutgoing;
     for (auto it : canopen::devices) {
-        canopen::incomingPDOHandlers[ 0x180 + it.first ] = [it](const TPCANRdMsg m) { canopen::defaultPDO_incoming( it.first, m ); };
-        canopen::incomingEMCYHandlers[ 0x081 + it.first ] = [it](const TPCANRdMsg mE) { canopen::defaultEMCY_incoming( it.first, mE ); };
+        canopen::incomingPDOHandlers[ 0x180 + it.first ] = [it](const TPCANRdMsg m) { canopen::defaultPDO_incoming_status_elmo( it.first, m ); };
+        canopen::incomingPDOHandlers[ 0x480 + it.first ] = [it](const TPCANRdMsg m) { canopen::defaultPDO_incoming_pos_elmo( it.first, m ); };
+       // canopen::incomingEMCYHandlers[ 0x081 + it.first ] = [it](const TPCANRdMsg mE) { canopen::defaultEMCY_incoming( it.first, mE ); };
     }
 
     // set up services, subscribers, and publishers for each of the chains:
