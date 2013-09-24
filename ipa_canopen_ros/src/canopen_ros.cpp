@@ -135,7 +135,7 @@ bool CANopenRecover(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 
-    for (auto device : canopen::devices)z
+    for (auto device : canopen::devices)
     {
         canopen::sendSDO(device.second.getCANid(), canopen::MODES_OF_OPERATION, canopen::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE);
         std::cout << "Setting IP mode for: " << (uint16_t)device.second.getCANid() << std::endl;
