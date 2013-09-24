@@ -187,8 +187,8 @@ void setVel(const brics_actuator::JointVelocities &msg, std::string chainName)
         }
 
 
-        joint_limits_[chainName].checkVelocityLimits(velocities);
-        joint_limits_[chainName].checkPositionLimits(velocities, positions);
+        //joint_limits_[chainName].checkVelocityLimits(velocities);
+        //joint_limits_[chainName].checkPositionLimits(velocities, positions);
 
         canopen::deviceGroups[chainName].setVel(velocities);
     }
@@ -438,8 +438,7 @@ int main(int argc, char **argv)
 
         statePublishers[it.first] = n.advertise<pr2_controllers_msgs::JointTrajectoryControllerState>("/" + it.first + "/state", 1);
 
-        std::cout <<"IT FIRSTTTT" << it.first <<  std::endl;
-        setJointConstraints(it.first, n);
+        //setJointConstraints(it.first, n);
     }
 
     double lr = 1000.0 / std::chrono::duration_cast<std::chrono::milliseconds>(canopen::syncInterval).count();

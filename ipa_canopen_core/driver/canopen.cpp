@@ -209,23 +209,22 @@ namespace canopen{
         {
 
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            std::cout << "Resetting CAN-device with CAN-ID " << (uint16_t)device.second.getCANid() << std::endl;
+
             canopen::sendNMT((uint16_t)device.second.getCANid(), canopen::NMT_RESET_NODE, device.second.getDeviceFile());
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            std::cout << "Resetting CAN-device with CAN-ID " << (uint16_t)device.second.getCANid() << std::endl;
+
             canopen::sendNMT((uint16_t)device.second.getCANid(), canopen::NMT_START_REMOTE_NODE, device.second.getDeviceFile());
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            std::cout << "Resetting CAN-device with CAN-ID " << (uint16_t)device.second.getCANid() << std::endl;
+
 
             std::cout << device.second.getDeviceFile() << std::endl;
 
             canopen::setMotorState(device.second.getCANid(), canopen::MS_SWITCHED_ON_DISABLED);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            std::cout << "Rdzuasuitrhweitjkwehegwfqgefhjwfqewhqfrg " << (uint16_t)device.second.getCANid() << std::endl;
 
             canopen::setMotorState(device.second.getCANid(), canopen::MS_READY_TO_SWITCH_ON);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            std::cout << "Resetting CAN-device with CAN-ID " << (uint16_t)device.second.getCANid() << std::endl;
+
 
             canopen::setMotorState(device.second.getCANid(), canopen::MS_SWITCHED_ON);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -715,8 +714,6 @@ namespace canopen{
 
         while(true)
         {
-            std::cout << "DEVICE NAME" << devName << std::endl;
-            std::cout << "Reading incoming data" << std::endl;
             TPCANRdMsg m;
 
             errno = LINUX_CAN_Read(h[devName], &m);
