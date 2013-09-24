@@ -170,19 +170,21 @@ namespace canopen{
 
         recover_active = false;
 
-        if (!canopen::openConnection(deviceFile)){
-            std::cout << "Cannot open CAN device; aborting." << std::endl;
-            exit(EXIT_FAILURE);
-        }
-        else{
-            std::cout << "Connection to CAN bus established" << std::endl;
-        }
+
 
         if (atFirstInit){
             //canopen::initListenerThread(canopen::defaultListener, deviceFile);
 
             if (std::find(open_devices.begin(), open_devices.end(), deviceFile) == open_devices.end())
             {
+                if (!canopen::openConnection(deviceFile)){
+                    std::cout << "Cannot open CAN device; aborting." << std::endl;
+                    exit(EXIT_FAILURE);
+                }
+                else{
+                    std::cout << "Connection to CAN bus established" << std::endl;
+                }
+
                 std::cout << "creating" << std::endl;
                 listener_threads.push_back(std::thread(defaultListener, deviceFile));
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
