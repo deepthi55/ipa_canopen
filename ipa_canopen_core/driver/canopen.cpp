@@ -189,12 +189,29 @@ namespace canopen{
                   m.DATA[1] = 0x81;
                  CAN_Write(canopen::h, &m);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            m.ID = 0x00;
+            m.MSGTYPE = 0x00;
+            m.LEN = 2;
+            m.DATA[0] = 0x81;
+            m.DATA[1] = 0x00;
+           CAN_Write(canopen::h, &m);
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
                               m.ID = 0x00;
                   m.MSGTYPE = 0x00;
                   m.LEN = 2;
                   m.DATA[0] = 0x00;
                   m.DATA[1] = 0x01;
                  CAN_Write(canopen::h, &m);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            m.ID = 0x00;
+            m.MSGTYPE = 0x00;
+            m.LEN = 2;
+            m.DATA[0] = 0x01;
+            m.DATA[1] = 0x00;
+            CAN_Write(canopen::h, &m);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             
             canopen::sendNMT((uint16_t)device.second.getCANid(), canopen::NMT_START_REMOTE_NODE);
