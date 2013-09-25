@@ -119,6 +119,8 @@ bool CANopenInit(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &r
 
     }
 
+    canopen::devices[11].setInitialized(true);
+
     res.success.data = true;
     res.error_message.data = "";
 
@@ -369,8 +371,8 @@ int main(int argc, char **argv)
     // add custom PDOs:
     canopen::sendPos = canopen::defaultPDOOutgoing;
     for (auto it : canopen::devices) {
-        canopen::incomingPDOHandlers[ 0x180 + it.first ] = [it](const TPCANRdMsg m) { canopen::defaultPDO_incoming_status_elmo( it.first, m ); };
-        canopen::incomingPDOHandlers[ 0x480 + it.first ] = [it](const TPCANRdMsg m) { canopen::defaultPDO_incoming_pos_elmo( it.first, m ); };
+        canopen::incomingPDOHandlers[ 0x18B] = [it](const TPCANRdMsg m) { canopen::defaultPDO_incoming_status_elmo( it.first, m ); };
+        canopen::incomingPDOHandlers[ 0x48B] = [it](const TPCANRdMsg m) { canopen::defaultPDO_incoming_pos_elmo( it.first, m ); };
        // canopen::incomingEMCYHandlers[ 0x081 + it.first ] = [it](const TPCANRdMsg mE) { canopen::defaultEMCY_incoming( it.first, mE ); };
     }
 
@@ -424,6 +426,7 @@ int main(int argc, char **argv)
             js.name = dg.second.getNames();
             js.header.stamp = ros::Time::now(); // todo: possibly better use timestamp of hardware msg?
             js.position = dg.second.getActualPos();
+            //std::cout << "Position" << js.position[0] << std::endl;
             js.velocity = dg.second.getActualVel();
             js.effort = std::vector<double>(dg.second.getNames().size(), 0.0);
             jointStatesPublisher.publish(js);
@@ -434,6 +437,7 @@ int main(int argc, char **argv)
             jtcs.actual.velocities = js.velocity;
             jtcs.desired.positions = dg.second.getDesiredPos();
             jtcs.desired.velocities = dg.second.getDesiredVel();
+            std::cout << "DesiredVel" << jtcs.desired.velocities[0] << std::endl;
             statePublishers[dg.first].publish(jtcs);
 
             std_msgs::String opmode;

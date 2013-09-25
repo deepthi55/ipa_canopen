@@ -204,6 +204,7 @@ namespace canopen{
             std::string getName(){
                 return name_;
             }
+
             bool getInitialized(){
                 return initialized_;
             }
@@ -561,6 +562,12 @@ namespace canopen{
     /***************************************************************/
     //	define get errors functions
     /***************************************************************/
+
+    void makeMapping(TPCANMsg *mes);
+    void disableTPDO(TPCANMsg *mes);
+    void clearMapping(TPCANMsg *mes);
+    void enableTPDO(TPCANMsg *mes);
+    void pdoChanged(TPCANMsg *mes);
 
     void getErrors(uint16_t CANid);
     std::vector<char> obtainManSWVersion(uint16_t CANid, TPCANRdMsg* m);
