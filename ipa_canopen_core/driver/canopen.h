@@ -563,10 +563,14 @@ namespace canopen{
     //	define get errors functions
     /***************************************************************/
 
-    void makeMapping(TPCANMsg *mes);
+    void makeTPDOMapping(TPCANMsg *mes);
     void disableTPDO(TPCANMsg *mes);
-    void clearMapping(TPCANMsg *mes);
+    void clearTPDOMapping(TPCANMsg *mes);
     void enableTPDO(TPCANMsg *mes);
+    void makeRPDOMapping(TPCANMsg *mes);
+    void disableRPDO(TPCANMsg *mes);
+    void clearRPDOMapping(TPCANMsg *mes);
+    void enableRPDO(TPCANMsg *mes);
     void pdoChanged(TPCANMsg *mes);
 
     void getErrors(uint16_t CANid);

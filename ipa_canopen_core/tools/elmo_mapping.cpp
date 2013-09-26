@@ -110,10 +110,10 @@ int main(int argc, char *argv[])
    canopen::disableTPDO(&mes);
    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-   canopen::clearMapping(&mes);
+   canopen::clearTPDOMapping(&mes);
    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-   canopen::makeMapping(&mes);
+   canopen::makeTPDOMapping(&mes);
    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
    canopen::enableTPDO(&mes);

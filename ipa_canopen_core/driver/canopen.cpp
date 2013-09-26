@@ -179,10 +179,19 @@ namespace canopen{
           canopen::disableTPDO(&mes);
           std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-          canopen::clearMapping(&mes);
+          canopen::clearTPDOMapping(&mes);
           std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-          canopen::makeMapping(&mes);
+          canopen::makeTPDOMapping(&mes);
+          std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+          canopen::disableRPDO(&mes);
+          std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+          canopen::clearRPDOMapping(&mes);
+          std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+          canopen::makeRPDOMapping(&mes);
           std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 
@@ -445,6 +454,9 @@ namespace canopen{
 
         if (atFirstInit)
             atFirstInit = false;
+
+        canopen::enableRPDO(&mes);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
         canopen::enableTPDO(&mes);
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -1494,7 +1506,7 @@ void statusword_incoming(uint8_t CANid, BYTE data[8])
 
    }
 
-   void clearMapping(TPCANMsg *mes)
+   void clearTPDOMapping(TPCANMsg *mes)
    {
        //////////////////// clear mapping
           mes->ID =0x60B;
@@ -1513,7 +1525,7 @@ void statusword_incoming(uint8_t CANid, BYTE data[8])
           std::this_thread::sleep_for(std::chrono::milliseconds(10));
    }
 
-   void makeMapping(TPCANMsg *mes)
+   void makeTPDOMapping(TPCANMsg *mes)
    {
        /////////////////////////
 
@@ -1632,6 +1644,131 @@ void statusword_incoming(uint8_t CANid, BYTE data[8])
           CAN_Write(canopen::h, mes);
 
           std::this_thread::sleep_for(std::chrono::milliseconds(10));
+   }
+
+   void disableRPDO(TPCANMsg *mes)
+   {
+
+          //////////////////// Disable tpdo4
+             mes->ID =0x60B;
+             mes->MSGTYPE = 0x00;
+             mes->LEN = 8;
+             mes->DATA[0] = 0x22;
+             mes->DATA[1] = 0x03;
+             mes->DATA[2] = 0x14;
+             mes->DATA[3] = 0x01;
+             mes->DATA[4] = 0x0B;
+             mes->DATA[5] = 0x05;
+             mes->DATA[6] = 0x00;
+             mes->DATA[7] = 0x80;
+             CAN_Write(canopen::h, mes);
+
+             std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+             /////////////////////////
+
+
+   }
+
+   void clearRPDOMapping(TPCANMsg *mes)
+   {
+       //////////////////// clear mapping
+          mes->ID =0x60B;
+          mes->MSGTYPE = 0x00;
+          mes->LEN = 8;
+          mes->DATA[0] = 0x2F;
+          mes->DATA[1] = 0x03;
+          mes->DATA[2] = 0x16;
+          mes->DATA[3] = 0x00;
+          mes->DATA[4] = 0x00;
+          mes->DATA[5] = 0x00;
+          mes->DATA[6] = 0x00;
+          mes->DATA[7] = 0x00;
+          CAN_Write(canopen::h, mes);
+
+          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+   }
+
+   void makeRPDOMapping(TPCANMsg *mes)
+   {
+       /////////////////////////
+
+       //////////////////// sub ind1=63
+          mes->ID =0x60B;
+          mes->MSGTYPE = 0x00;
+          mes->LEN = 8;
+          mes->DATA[0] = 0x2F;
+          mes->DATA[1] = 0x03;
+          mes->DATA[2] = 0x16;
+          mes->DATA[3] = 0x01;
+          mes->DATA[4] = 0x20;
+          mes->DATA[5] = 0x00;
+          mes->DATA[6] = 0xff;
+          mes->DATA[7] = 0x60;
+          CAN_Write(canopen::h, mes);
+
+          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+          /////////////////////////
+
+             //////////////////// ASync
+                mes->ID =0x60B;
+                mes->MSGTYPE = 0x00;
+                mes->LEN = 8;
+                mes->DATA[0] = 0x2F;
+                mes->DATA[1] = 0x03;
+                mes->DATA[2] = 0x16;
+                mes->DATA[3] = 0x02;
+                mes->DATA[4] = 0xFF;
+                mes->DATA[5] = 0x00;
+                mes->DATA[6] = 0x00;
+                mes->DATA[7] = 0x00;
+                CAN_Write(canopen::h, mes);
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+                //////////////////////
+                ///
+                ///
+                /////////////////////// Mapping 2 objects
+                      mes->ID =0x60B;
+                      mes->MSGTYPE = 0x00;
+                      mes->LEN = 8;
+                      mes->DATA[0] = 0x2F;
+                      mes->DATA[1] = 0x03;
+                      mes->DATA[2] = 0x16;
+                      mes->DATA[3] = 0x00;
+                      mes->DATA[4] = 0x01;
+                      mes->DATA[5] = 0x00;
+                      mes->DATA[6] = 0x00;
+                      mes->DATA[7] = 0x00;
+                      CAN_Write(canopen::h, mes);
+
+                      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+                      /////////////////////////
+
+   }
+
+   void enableRPDO(TPCANMsg *mes)
+   {
+       //////////////////// Enable tpdo4
+          mes->ID =0x60B;
+          mes->MSGTYPE = 0x00;
+          mes->LEN = 8;
+          mes->DATA[0] = 0x22;
+          mes->DATA[1] = 0x03;
+          mes->DATA[2] = 0x14;
+          mes->DATA[3] = 0x01;
+          mes->DATA[4] = 0x0B;
+          mes->DATA[5] = 0x05;
+          mes->DATA[6] = 0x00;
+          mes->DATA[7] = 0x00;
+          CAN_Write(canopen::h, mes);
+
+          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+          /////////////////////////
    }
 
 
