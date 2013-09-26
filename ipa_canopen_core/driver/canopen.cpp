@@ -140,7 +140,7 @@ namespace canopen{
         }
     }
 
-    void init(std::string deviceFile, std::chrono::milliseconds syncInterval){
+    void init_elmo(std::string deviceFile, std::chrono::milliseconds syncInterval){
         CAN_Close(h);
 
         NMTmsg.ID = 0;
@@ -466,7 +466,7 @@ namespace canopen{
     }
 
 
-    void recover(std::string deviceFile, std::chrono::milliseconds syncInterval){
+    void recover_elmo(std::string deviceFile, std::chrono::milliseconds syncInterval){
         CAN_Close(h);
 
 
@@ -494,52 +494,257 @@ namespace canopen{
             std::cout << "Module with CAN-id " << (uint16_t)device.second.getCANid() << " connected (recover)" << std::endl;
         }
 
-        for (auto device : devices){
-
-            if(device.second.getMotorState() == MS_OPERATION_ENABLED)
-            {
-                std::cout << "Node" << device.second.getCANid() << "is operational" << std::endl;
-            }
-            else
-            {
-
-                canopen::sendSDO(device.second.getCANid(), canopen::CONTROLWORD, canopen:: CONTROLWORD_HALT);
-
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-                canopen::sendSDO(device.second.getCANid(), canopen::CONTROLWORD, canopen:: CONTROLWORD_DISABLE_INTERPOLATED);
-
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-                canopen::sendSDO(device.second.getCANid(), canopen::CONTROLWORD, canopen:: CONTROL_WORD_DISABLE_VOLTAGE);
-
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-                canopen::sendSDO(device.second.getCANid(), canopen::CONTROLWORD, canopen::CONTROLWORD_QUICKSTOP);
-                canopen::sendSDO(device.second.getCANid(), canopen::STATUSWORD);
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-                canopen::setMotorState(device.second.getCANid(), canopen::MS_SWITCHED_ON_DISABLED);
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-                canopen::setMotorState(device.second.getCANid(), canopen::MS_READY_TO_SWITCH_ON);
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-                canopen::setMotorState(device.second.getCANid(), canopen::MS_SWITCHED_ON);
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-                canopen::setMotorState(device.second.getCANid(), canopen::MS_OPERATION_ENABLED);
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-                sendSDO((uint16_t)device.second.getCANid(), canopen::IP_TIME_UNITS, (uint8_t) syncInterval.count() );
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                sendSDO((uint16_t)device.second.getCANid(), canopen::IP_TIME_INDEX, (uint8_t)canopen::IP_TIME_INDEX_MILLISECONDS);
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                sendSDO((uint16_t)device.second.getCANid(), canopen::SYNC_TIMEOUT_FACTOR, (uint8_t)canopen::SYNC_TIMEOUT_FACTOR_DISABLE_TIMEOUT);
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        for (auto device : devices)
+        {
+            TPCANMsg m;
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::cout << "Resetting CAN-device with CAN-ID " << (uint16_t)device.second.getCANid() << std::endl;
+            canopen::sendNMT((uint16_t)device.second.getCANid(), canopen::NMT_RESET_NODE);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//               ////////////////////
+//                  m.ID = 0x00;
+//                  m.MSGTYPE = 0x00;
+//                  m.LEN = 2;
+//                  m.DATA[0] = 0x00;
+//                  m.DATA[1] = 0x81;
+//                 CAN_Write(canopen::h, &m);
+//            std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 
-            }
+//                              m.ID = 0x00;
+//                  m.MSGTYPE = 0x00;
+//                  m.LEN = 2;
+//                  m.DATA[0] = 0x00;
+//                  m.DATA[1] = 0x01;
+//                 CAN_Write(canopen::h, &m);
+//            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+
+            canopen::sendNMT((uint16_t)device.second.getCANid(), canopen::NMT_START_REMOTE_NODE);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+//            ////////////////////
+//               m.ID = 0x00;
+//               m.MSGTYPE = 0x00;
+//               m.LEN = 3;
+//               m.DATA[0] = 0x00;
+//               m.DATA[1] = 0x01;
+//               m.DATA[2] = 0x00;
+//               CAN_Write(canopen::h, &m);
+
+//               ////////////////////
+//                  m.ID = 0x00;
+//                  m.MSGTYPE = 0x00;
+//                  m.LEN = 2;
+//                  m.DATA[0] = 0x01;
+//                  m.DATA[1] = 0x00;
+//                  CAN_Write(canopen::h, &m);
+
+
+
+
+
+           canopen::sendSDO(device.second.getCANid(), canopen::MODES_OF_OPERATION, (uint8_t)canopen::MODES_OF_OPERATION_PROFILE_VELOCITY_MODE);
+           std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+            canopen::sendSDO(device.second.getCANid(), canopen::CONTROLWORD, canopen:: CONTROLWORD_HALT);
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            canopen::sendSDO(device.second.getCANid(), canopen::CONTROLWORD, canopen:: CONTROL_WORD_DISABLE_VOLTAGE);
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            canopen::sendSDO(device.second.getCANid(), canopen::CONTROLWORD, canopen::CONTROLWORD_QUICKSTOP);
+            canopen::sendSDO(device.second.getCANid(), canopen::STATUSWORD);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            canopen::sendSDO(device.second.getCANid(), canopen::CONTROLWORD, canopen:: CONTROLWORD_FAULT_RESET_1);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            canopen::sendSDO(device.second.getCANid(), canopen::CONTROLWORD, canopen:: CONTROLWORD_FAULT_RESET_0);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            canopen::setMotorState(device.second.getCANid(), canopen::MS_SWITCHED_ON_DISABLED);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+//            canopen::setMotorState(device.second.getCANid(), canopen::MS_READY_TO_SWITCH_ON);
+//            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+//            canopen::setMotorState(device.second.getCANid(), canopen::MS_SWITCHED_ON);
+//            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+//            canopen::setMotorState(device.second.getCANid(), canopen::MS_OPERATION_ENABLED);
+//            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+
+//            ////////////////////
+//               m.ID = 0x00;
+//               m.MSGTYPE = 0x00;
+//               m.LEN = 3;
+//               m.DATA[0] = 0x00;
+//               m.DATA[1] = 0x01;
+//               m.DATA[2] = 0x00;
+//               CAN_Write(canopen::h, &m);
+
+//            ////////////////////
+               m.ID = 0x60B;//CANid + 0x60B;
+               m.MSGTYPE = 0x00;
+               m.LEN = 8;
+               m.DATA[0] = 0x22;
+               m.DATA[1] = 0x85;
+               m.DATA[2] = 0x60;
+               m.DATA[3] = 0x00;
+               m.DATA[4] = 0x80;
+               m.DATA[5] = 0x84;
+               m.DATA[6] = 0x1E;
+               m.DATA[7] = 0x00;
+               CAN_Write(canopen::h, &m);
+
+               //////////////////// Ready to switch on
+                  m.ID = 0x60B;//CANid + 0x60B;
+                  m.MSGTYPE = 0x00;
+                  m.LEN = 8;
+                  m.DATA[0] = 0x22;
+                  m.DATA[1] = 0x40;
+                  m.DATA[2] = 0x60;
+                  m.DATA[3] = 0x00;
+                  m.DATA[4] = 0x06;
+                  m.DATA[5] = 0x00;
+                  m.DATA[6] = 0x00;
+                  m.DATA[7] = 0x00;
+                  CAN_Write(canopen::h, &m);
+
+                  std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+
+                  /////////////////////////
+
+                  //////////////////// Read status
+                     m.ID = 0x60B;//CANid + 0x60B;
+                     m.MSGTYPE = 0x00;
+                     m.LEN = 8;
+                     m.DATA[0] = 0x40;
+                     m.DATA[1] = 0x41;
+                     m.DATA[2] = 0x60;
+                     m.DATA[3] = 0x00;
+                     m.DATA[4] = 0x00;
+                     m.DATA[5] = 0x00;
+                     m.DATA[6] = 0x00;
+                     m.DATA[7] = 0x00;
+                     CAN_Write(canopen::h, &m);
+
+                     std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+
+                     /////////////////////////
+
+                     //////////////////// Switch on
+                        m.ID = 0x60B;//CANid + 0x60B;
+                        m.MSGTYPE = 0x00;
+                        m.LEN = 8;
+                        m.DATA[0] = 0x22;
+                        m.DATA[1] = 0x40;
+                        m.DATA[2] = 0x60;
+                        m.DATA[3] = 0x00;
+                        m.DATA[4] = 0x07;
+                        m.DATA[5] = 0x00;
+                        m.DATA[6] = 0x00;
+                        m.DATA[7] = 0x00;
+                        CAN_Write(canopen::h, &m);
+
+                        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+
+                        /////////////////////////
+
+                        //////////////////// Read status
+                           m.ID = 0x60B;//CANid + 0x60B;
+                           m.MSGTYPE = 0x00;
+                           m.LEN = 8;
+                           m.DATA[0] = 0x40;
+                           m.DATA[1] = 0x41;
+                           m.DATA[2] = 0x60;
+                           m.DATA[3] = 0x00;
+                           m.DATA[4] = 0x00;
+                           m.DATA[5] = 0x00;
+                           m.DATA[6] = 0x00;
+                           m.DATA[7] = 0x00;
+                           CAN_Write(canopen::h, &m);
+
+                           std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+
+                           /////////////////////////
+
+                           //////////////////// Start mo=1
+                              m.ID = 0x60B;//CANid + 0x60B;
+                              m.MSGTYPE = 0x00;
+                              m.LEN = 8;
+                              m.DATA[0] = 0x22;
+                              m.DATA[1] = 0x40;
+                              m.DATA[2] = 0x60;
+                              m.DATA[3] = 0x00;
+                              m.DATA[4] = 0x0f;
+                              m.DATA[5] = 0x00;
+                              m.DATA[6] = 0x00;
+                              m.DATA[7] = 0x00;
+                              CAN_Write(canopen::h, &m);
+
+                              std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+
+                              /////////////////////////
+
+                              //////////////////// Read status
+                                 m.ID = 0x60B;//CANid + 0x60B;
+                                 m.MSGTYPE = 0x00;
+                                 m.LEN = 8;
+                                 m.DATA[0] = 0x40;
+                                 m.DATA[1] = 0x41;
+                                 m.DATA[2] = 0x60;
+                                 m.DATA[3] = 0x00;
+                                 m.DATA[4] = 0x00;
+                                 m.DATA[5] = 0x00;
+                                 m.DATA[6] = 0x00;
+                                 m.DATA[7] = 0x00;
+                                 CAN_Write(canopen::h, &m);
+
+                                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+
+//                                 /////////////////////////
+
+//                                 //// //////////////////// disable TPDO 4
+//                                     m.ID =0x60B;
+//                                     m.MSGTYPE = 0x00;
+//                                     m.LEN = 8;
+//                                     m.DATA[0] = 0x22;
+//                                     m.DATA[1] = 0x03;
+//                                     m.DATA[2] = 0x18;
+//                                     m.DATA[3] = 0x01;
+//                                     m.DATA[4] = 0x8B;
+//                                     m.DATA[5] = 0x04;
+//                                     m.DATA[6] = 0x00;
+//                                     m.DATA[7] = 0x80;
+//                                     CAN_Write(canopen::h, &m);
+
+//                                     std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+
+
+                                        /////////////////////////
+
+//            sendSDO((uint16_t)device.second.getCANid(), canopen::IP_TIME_UNITS, (uint8_t) syncInterval.count() );
+//            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//            sendSDO((uint16_t)device.second.getCANid(), canopen::IP_TIME_INDEX, (uint8_t)canopen::IP_TIME_INDEX_MILLISECONDS);
+//            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//            sendSDO((uint16_t)device.second.getCANid(), canopen::SYNC_TIMEOUT_FACTOR, (uint8_t)canopen::SYNC_TIMEOUT_FACTOR_DISABLE_TIMEOUT);
+//            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+
+
+
 
 
             devices[device.second.getCANid()].setDesiredPos((double)device.second.getActualPos());
