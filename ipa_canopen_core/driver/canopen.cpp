@@ -755,7 +755,7 @@ namespace canopen{
                         sendPos((uint16_t)device.second.getCANid(), (double)device.second.getDesiredVel());
                     }
                 }
-                //canopen::sendSync();
+                canopen::sendSync();
                 std::this_thread::sleep_for(syncInterval - (std::chrono::high_resolution_clock::now() - tic ));
             }
 
