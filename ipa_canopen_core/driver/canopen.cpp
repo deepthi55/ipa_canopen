@@ -1232,7 +1232,7 @@ namespace canopen{
 
         uint16_t mydata_low = m.Msg.DATA[0];
         uint16_t mydata_high = m.Msg.DATA[1];
-
+        canopen::busInitialized = false;
         //std::cout << "EMCY" << (uint16_t)CANid << " is: " << (uint16_t)m.Msg.DATA[0] << std::endl;
 
 
@@ -1276,6 +1276,7 @@ namespace canopen{
              if(fault)
                  {
                   devices[CANid].setMotorState(canopen::MS_FAULT);
+
                  }
              else if(switch_on_disabled)
                  {
@@ -1421,7 +1422,7 @@ namespace canopen{
                             //if(volt_enable)
                            // {
                                 devices[CANid].setMotorState(canopen::MS_OPERATION_ENABLED);
-                                devices[CANid].setInitialized(true);
+
                            // }
 
                         }
@@ -1439,6 +1440,14 @@ namespace canopen{
         if(fault & op_enable & switched_on & ready_switch_on)
             devices[CANid].setMotorState(canopen::MS_FAULT_REACTION_ACTIVE);
 
+        if(op_enable)
+         {
+            devices[CANid].setInitialized(true);
+        }
+        else
+        {
+            devices[CANid].setInitialized(false);
+        }
 
         devices[CANid].setFault(fault);
         devices[CANid].setIPMode(ip_mode);
@@ -1886,6 +1895,14 @@ void statusword_incoming(uint8_t CANid, BYTE data[8])
             devices[CANid].setMotorState(canopen::MS_FAULT_REACTION_ACTIVE);
 
 
+        if(op_enable)
+         {
+            devices[CANid].setInitialized(true);
+        }
+        else
+        {
+            devices[CANid].setInitialized(false);
+        }
 
         devices[CANid].setFault(fault);
         devices[CANid].setHoming(op_specific);

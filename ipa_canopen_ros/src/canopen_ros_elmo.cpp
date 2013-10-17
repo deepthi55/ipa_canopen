@@ -119,6 +119,7 @@ bool CANopenInit(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &r
            {
                res.success.data = true;
                res.error_message.data = "";
+               canopen::busInitialized = true;
            }
         }
 
@@ -126,8 +127,9 @@ bool CANopenInit(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &r
     }
 
      ROS_INFO("...initializing CANopen Elmo successful");
-    canopen::busInitialized = true;
 
+     res.success.data = true;
+     res.error_message.data = "";
 
     return true;
 
@@ -137,6 +139,8 @@ bool CANopenInit(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &r
 bool CANopenRecover(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &res, std::string chainName)
 {
 
+    if(!canopen::busInitialized)
+    {
     ROS_INFO("Recovering CANopen...");
    canopen::recover_elmo(deviceFile, canopen::syncInterval);
    std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -148,7 +152,7 @@ bool CANopenRecover(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response
        {
            res.success.data = false;
            res.error_message.data = "Device not initialized";
-
+           canopen::busInitialized = false;
            ROS_INFO("...recovering CANopen not successful. error: %s", res.error_message.data.c_str());
            return false;
        }
@@ -156,7 +160,7 @@ bool CANopenRecover(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response
        {
            res.success.data = true;
            res.error_message.data = "";
-
+            canopen::busInitialized = true;
            canopen::devices[device.second.getCANid()].setDesiredPos((double)device.second.getActualPos());
            canopen::devices[device.second.getCANid()].setDesiredVel(0);
 
@@ -165,7 +169,7 @@ bool CANopenRecover(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response
        }
     }
 
-
+    }
 
    res.success.data = true;
    res.error_message.data = "";
