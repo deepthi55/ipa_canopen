@@ -79,6 +79,8 @@ namespace canopen{
     bool halt_positive;
     bool halt_negative;
 
+    bool busInitialized;
+
     uint8_t operation_mode;
 
     /***************************************************************/
@@ -173,7 +175,7 @@ namespace canopen{
         }
 
         for (auto device : devices){
-            std::cout << "Module with CAN-id " << (uint16_t)device.second.getCANid() << " connected" << std::endl;
+            //std::cout << "Module with CAN-id " << (uint16_t)device.second.getCANid() << " connected" << std::endl;
             getErrors(device.second.getCANid());
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
@@ -191,7 +193,7 @@ namespace canopen{
             {
 
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            std::cout << "Resetting CAN-device with CAN-ID " << (uint16_t)device.second.getCANid() << std::endl;
+            //std::cout << "Resetting CAN-device with CAN-ID " << (uint16_t)device.second.getCANid() << std::endl;
             canopen::sendNMT((uint16_t)device.second.getCANid(), canopen::NMT_RESET_NODE);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             canopen::sendNMT((uint16_t)device.second.getCANid(), canopen::NMT_START_REMOTE_NODE);
@@ -255,7 +257,7 @@ namespace canopen{
 
 
         for (auto device : devices){
-            std::cout << "Module with CAN-id " << (uint16_t)device.second.getCANid() << " connected (recover)" << std::endl;
+            //std::cout << "Module with CAN-id " << (uint16_t)device.second.getCANid() << " connected (recover)" << std::endl;
         }
 
         for (auto device : devices){
@@ -365,7 +367,7 @@ namespace canopen{
 
 
         for (auto device : devices){
-            std::cout << "Module with CAN-id " << (uint16_t)device.second.getCANid() << " connected (recover)" << std::endl;
+            //std::cout << "Module with CAN-id " << (uint16_t)device.second.getCANid() << " connected (recover)" << std::endl;
         }
 
         for (auto device : devices){
@@ -421,7 +423,7 @@ namespace canopen{
         }
 
         for (auto device : devices){
-            std::cout << "Module with CAN-id " << (uint16_t)device.second.getCANid() << " connected" << std::endl;
+            //std::cout << "Module with CAN-id " << (uint16_t)device.second.getCANid() << " connected" << std::endl;
             getErrors(device.second.getCANid());
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
@@ -462,7 +464,7 @@ namespace canopen{
         {
             TPCANMsg m;
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            std::cout << "Resetting CAN-device with CAN-ID " << (uint16_t)device.second.getCANid() << std::endl;
+           // std::cout << "Resetting CAN-device with CAN-ID " << (uint16_t)device.second.getCANid() << std::endl;
 
 
             canopen::sendNMT((uint16_t)device.second.getCANid(), canopen::NMT_START_REMOTE_NODE);
@@ -666,14 +668,14 @@ namespace canopen{
 
 
         for (auto device : devices){
-            std::cout << "Module with CAN-id " << (uint16_t)device.second.getCANid() << " connected (recover)" << std::endl;
+            //std::cout << "Module with CAN-id " << (uint16_t)device.second.getCANid() << " connected (recover)" << std::endl;
         }
 
         for (auto device : devices)
         {
             TPCANMsg m;
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            std::cout << "Resetting CAN-device with CAN-ID " << (uint16_t)device.second.getCANid() << std::endl;
+            //std::cout << "Resetting CAN-device with CAN-ID " << (uint16_t)device.second.getCANid() << std::endl;
 
 
             canopen::sendNMT(0, canopen::NMT_START_REMOTE_NODE);
@@ -1053,7 +1055,7 @@ namespace canopen{
             auto tic = std::chrono::high_resolution_clock::now();
             if (!recover_active){
                 for (auto device : canopen::devices) {
-                    if (device.second.getInitialized()) {
+                    if (canopen::busInitialized) {
                         devices[device.first].updateDesiredPos();
                         sendPos((uint16_t)device.second.getCANid(), (double)device.second.getDesiredPos());
                     }
@@ -1231,7 +1233,7 @@ namespace canopen{
         uint16_t mydata_low = m.Msg.DATA[0];
         uint16_t mydata_high = m.Msg.DATA[1];
 
-        std::cout << "EMCY" << (uint16_t)CANid << " is: " << (uint16_t)m.Msg.DATA[0] << std::endl;
+        //std::cout << "EMCY" << (uint16_t)CANid << " is: " << (uint16_t)m.Msg.DATA[0] << std::endl;
 
 
     }
@@ -1360,7 +1362,7 @@ namespace canopen{
             devices[CANid].setActualVel(result);
                 if (! devices[CANid].getInitialized()) {
                 devices[CANid].setDesiredPos(newPos);
-                devices[CANid].setInitialized(true);
+                //devices[CANid].setInitialized(true);
             }
             //std::cout << "actualPos: " << devices[CANid].getActualPos() << "  desiredPos: " << devices[CANid].getDesiredPos() << std::endl;
         }
@@ -1419,6 +1421,7 @@ namespace canopen{
                             //if(volt_enable)
                            // {
                                 devices[CANid].setMotorState(canopen::MS_OPERATION_ENABLED);
+                                devices[CANid].setInitialized(true);
                            // }
 
                         }
@@ -1487,7 +1490,7 @@ namespace canopen{
 
             // incoming EMCY
             else if (m.Msg.ID >= 0x081 && m.Msg.ID <= 0x0FF){
-                std::cout << std::hex << "EMCY received:  " << (uint16_t)m.Msg.ID << "  " << (uint16_t)m.Msg.DATA[0] << " " << (uint16_t)m.Msg.DATA[1] << " " << (uint16_t)m.Msg.DATA[2] << " " << (uint16_t)m.Msg.DATA[3] << " " << (uint16_t)m.Msg.DATA[4] << " " << (uint16_t)m.Msg.DATA[5] << " " << (uint16_t)m.Msg.DATA[6] << " " << (uint16_t)m.Msg.DATA[7] << std::endl;
+                //std::cout << std::hex << "EMCY received:  " << (uint16_t)m.Msg.ID << "  " << (uint16_t)m.Msg.DATA[0] << " " << (uint16_t)m.Msg.DATA[1] << " " << (uint16_t)m.Msg.DATA[2] << " " << (uint16_t)m.Msg.DATA[3] << " " << (uint16_t)m.Msg.DATA[4] << " " << (uint16_t)m.Msg.DATA[5] << " " << (uint16_t)m.Msg.DATA[6] << " " << (uint16_t)m.Msg.DATA[7] << std::endl;
                 if (incomingEMCYHandlers.find(m.Msg.ID) != incomingEMCYHandlers.end())
                     incomingEMCYHandlers[m.Msg.ID](m);
             }
@@ -1518,14 +1521,14 @@ namespace canopen{
             // incoming NMT error control
             else if (m.Msg.ID >= 0x700 && m.Msg.ID <= 0x7FF){
                 if (m.Msg.DATA[0] == 0x00){
-                    std::cout << "Bootup received. Node-ID =  " << (uint16_t)(m.Msg.ID - 0x700) << std::endl;
+                    //std::cout << "Bootup received. Node-ID =  " << (uint16_t)(m.Msg.ID - 0x700) << std::endl;
                 }
                 else{
-                    std::cout << "NMT error control received:  " << (uint16_t)(m.Msg.ID - 0x700) << "  " << (uint16_t)m.Msg.DATA[0] << std::endl;
+                    //std::cout << "NMT error control received:  " << (uint16_t)(m.Msg.ID - 0x700) << "  " << (uint16_t)m.Msg.DATA[0] << std::endl;
                 }
             }
             else{
-                 std::cout << "Received unknown message" << std::endl;
+                 //std::cout << "Received unknown message" << std::endl;
             }
         }
     }
@@ -1864,6 +1867,7 @@ void statusword_incoming(uint8_t CANid, BYTE data[8])
                             //if(volt_enable)
                            // {
                                 devices[CANid].setMotorState(canopen::MS_OPERATION_ENABLED);
+                                devices[CANid].setInitialized(true);
                            // }
 
                         }
@@ -1901,7 +1905,7 @@ void statusword_incoming(uint8_t CANid, BYTE data[8])
         devices[CANid].setReadySwitchON(ready_switch_on);
         devices[CANid].setSwitchON(switched_on);
 
-        std::cout << "Motor State of Device with CANid " << (uint16_t)CANid << " is: " << devices[CANid].getMotorState() << std::endl;
+        //std::cout << "Motor State of Device with CANid " << (uint16_t)CANid << " is: " << devices[CANid].getMotorState() << std::endl;
     }
 
     void processSingleSDO(uint8_t CANid, TPCANRdMsg* message)

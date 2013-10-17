@@ -617,6 +617,7 @@ namespace canopen{
     /***************************************************************/
 
     extern bool atFirstInit;
+    extern bool busInitialized;
     extern bool recover_active;
     extern bool halt_active;
 

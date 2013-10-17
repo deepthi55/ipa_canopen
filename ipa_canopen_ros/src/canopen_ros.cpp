@@ -95,32 +95,49 @@ std::vector<std::string> jointNames;
 bool CANopenInit(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &res, std::string chainName)
 {
 
-    canopen::init(deviceFile, canopen::syncInterval);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-
-    for (auto device : canopen::devices)
+    if(!canopen::busInitialized)
     {
+        ROS_INFO("Initializing CANopen...");
 
-        canopen::sendSDO(device.second.getCANid(), canopen::MODES_OF_OPERATION, canopen::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE);
-        std::cout << "Setting IP mode for: " << (uint16_t)device.second.getCANid() << std::endl;
+        canopen::init(deviceFile, canopen::syncInterval);
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+
+        for (auto device : canopen::devices)
+        {
+
+            canopen::sendSDO(device.second.getCANid(), canopen::MODES_OF_OPERATION, canopen::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE);
+            std::cout << "Setting IP mode for: " << (uint16_t)device.second.getCANid() << std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+
+
+       for (auto device : canopen::devices)
+        {
+           if(!device.second.getInitialized())
+           {
+               res.success.data = false;
+               res.error_message.data = "Device not initialized";
+               canopen::busInitialized = false;
+               ROS_INFO("...initializing CANopen not successful. error: %s", res.error_message.data.c_str());
+               return false;
+           }
+           else
+           {
+               res.success.data = true;
+               res.error_message.data = "";
+           }
+        }
+
+       canopen::initDeviceManagerThread(canopen::deviceManager);
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+     ROS_INFO("...initializing CANopen successful");
+    canopen::busInitialized = true;
 
-    canopen::initDeviceManagerThread(canopen::deviceManager);
-
-    for (auto device : canopen::devices)
-    {
-        device.second.setInitialized(true);
-       // if(device.second.getHomingError())
-         //   return false;
-
-    }
-
-    res.success.data = true;
-    res.error_message.data = "";
 
     return true;
 }
@@ -130,7 +147,7 @@ bool CANopenRecover(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response
 {
 
 
-
+     ROS_INFO("Recovering CANopen...");
     canopen::recover(deviceFile, canopen::syncInterval);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
@@ -142,21 +159,38 @@ bool CANopenRecover(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     }
-    //canopen::initDeviceManagerThread(canopen::deviceManager);
+
 
     for (auto device : canopen::devices)
-    {
-        canopen::devices[device.second.getCANid()].setDesiredPos((double)device.second.getActualPos());
-        canopen::devices[device.second.getCANid()].setDesiredVel(0);
+     {
+        if(!device.second.getInitialized())
+        {
+            res.success.data = false;
+            res.error_message.data = "Device not initialized";
 
-        canopen::sendPos((uint16_t)device.second.getCANid(), (double)device.second.getDesiredPos());
-        canopen::sendPos((uint16_t)device.second.getCANid(), (double)device.second.getDesiredPos());
+            ROS_INFO("...recovering CANopen not successful. error: %s", res.error_message.data.c_str());
+            return false;
+        }
+        else
+        {
+            res.success.data = true;
+            res.error_message.data = "";
 
-        device.second.setInitialized(true);
-    }
+            canopen::devices[device.second.getCANid()].setDesiredPos((double)device.second.getActualPos());
+            canopen::devices[device.second.getCANid()].setDesiredVel(0);
+
+            canopen::sendPos((uint16_t)device.second.getCANid(), (double)device.second.getDesiredPos());
+            canopen::sendPos((uint16_t)device.second.getCANid(), (double)device.second.getDesiredPos());
+        }
+     }
+
+
 
     res.success.data = true;
     res.error_message.data = "";
+
+    ROS_INFO("...recovering CANopen successful");
+
     return true;
 }
 
@@ -294,7 +328,7 @@ void setJointConstraints(ros::NodeHandle n)
           ROS_ERROR("Unable to load robot model from parameter %s",full_param_name.c_str());
           n.shutdown();
       }
-      ROS_INFO("%s content\n%s", full_param_name.c_str(), xml_string.c_str());
+      //ROS_INFO("%s content\n%s", full_param_name.c_str(), xml_string.c_str());
 
       /// Get urdf model out of robot_description
       urdf::Model model;
