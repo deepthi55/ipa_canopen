@@ -240,14 +240,14 @@ void setVel(const brics_actuator::JointVelocities &msg, std::string chainName)
 void readParamsFromParameterServer(ros::NodeHandle n)
 {
     XmlRpc::XmlRpcValue busParams;
-    std::cout << "323" << std::endl;
+
     if (!n.hasParam("devices") || !n.hasParam("chains"))
     {
         ROS_ERROR("Missing parameters on parameter server; shutting down node.");
         ROS_ERROR("Please consult the user manual for necessary parameter settings.");
         n.shutdown();
     }
-    std::cout << "323" << std::endl;
+
     n.getParam("devices", busParams);
     for (int i=0; i<busParams.size(); i++)
     {
@@ -257,32 +257,32 @@ void readParamsFromParameterServer(ros::NodeHandle n)
         busParam.syncInterval = static_cast<int>(busParams[i]["sync_interval"]);
         buses[name] = busParam;
     }
-std::cout << "323" << std::endl;
+
     XmlRpc::XmlRpcValue chainNames_XMLRPC;
     n.getParam("chains", chainNames_XMLRPC);
 
     for (int i=0; i<chainNames_XMLRPC.size(); i++)
         chainNames.push_back(static_cast<std::string>(chainNames_XMLRPC[i]));
-std::cout << "323" << std::endl;
+
     for (auto chainName : chainNames) {
         XmlRpc::XmlRpcValue jointNames_XMLRPC;
             n.getParam("/" + chainName + "/joint_names", jointNames_XMLRPC);
-    std::cout << "323" << std::endl;
+
             for (int i=0; i<jointNames_XMLRPC.size(); i++)
                 jointNames.push_back(static_cast<std::string>(jointNames_XMLRPC[i]));
-std::cout << "323" << std::endl;
+
         XmlRpc::XmlRpcValue moduleIDs_XMLRPC;
         n.getParam("/" + chainName + "/module_ids", moduleIDs_XMLRPC);
         std::vector<uint8_t> moduleIDs;
         for (int i=0; i<moduleIDs_XMLRPC.size(); i++)
             moduleIDs.push_back(static_cast<int>(moduleIDs_XMLRPC[i]));
-std::cout << "323" << std::endl;
+
         XmlRpc::XmlRpcValue devices_XMLRPC;
         n.getParam("/" + chainName + "/devices", devices_XMLRPC);
         std::vector<std::string> devices;
         for (int i=0; i<devices_XMLRPC.size(); i++)
             devices.push_back(static_cast<std::string>(devices_XMLRPC[i]));
-std::cout << "323" << std::endl;
+
         for (unsigned int i=0; i<jointNames.size(); i++)
             canopen::devices[ moduleIDs[i] ] = canopen::Device(moduleIDs[i], jointNames[i], chainName, devices[i]);
 
