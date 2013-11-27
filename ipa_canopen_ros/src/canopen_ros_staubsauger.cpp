@@ -14,17 +14,17 @@
  * \note
  *   ROS stack name: ipa_canopen
  * \note
- *   ROS package name: ipa_canopen_ros
+ *   ROS package name: ipa_canopen_core
  *
  * \author
- *   Author: Eduard Herkel, Thiago de Freitas, Tobias Sing
+ *   Author: Thiago de Freitas
  * \author
- *   Supervised by: Eduard Herkel, Thiago de Freitas, Tobias Sing, email:tdf@ipa.fhg.de
+ *   Supervised by: Thiago de Freitas, email:tdf@ipa.fhg.de
  *
- * \date Date of creation: December 2012
+ * \date Date of creation: November 2013
  *
  * \brief
- *   Implementation of canopen.
+ *   Staubsauger Version for the AutoPnp Project
  *
  *****************************************************************
  *
@@ -56,7 +56,6 @@
  * If not, see <http://www.gnu.org/licenses/>.
  *
  ****************************************************************/
-
 #include "ros/ros.h"
 #include <urdf/model.h>
 #include "std_msgs/String.h"
@@ -95,29 +94,31 @@ std::vector<std::string> jointNames;
 bool CANopenInit(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &res, std::string chainName)
 {
     ROS_INFO("Initializing modules");
-    canopen::init(deviceFile, canopen::syncInterval);
+    canopen::init_staubsauger(deviceFile, canopen::syncInterval);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 
-    for (auto device : canopen::devices)
-    {
+//    for (auto device : canopen::devices)
+//    {
 
-        canopen::sendSDO(device.second.getCANid(), canopen::MODES_OF_OPERATION, canopen::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE);
-        //std::cout << "Setting IP mode for: " << (uint16_t)device.second.getCANid() << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
+//        canopen::sendSDO(device.second.getCANid(), canopen::MODES_OF_OPERATION, canopen::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE);
+//        std::cout << "Setting IP mode for: " << (uint16_t)device.second.getCANid() << std::endl;
+//        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//    }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    canopen::initDeviceManagerThread(canopen::deviceManager);
+    canopen::initDeviceManagerThread(canopen::deviceManager_staubsauger);
 
     for (auto device : canopen::devices)
     {
-        device.second.setInitialized(true);
+        canopen::devices[(uint16_t)device.second.getCANid()].setInitialized(true);
+
        // if(device.second.getHomingError())
          //   return false;
 
     }
+
 
     res.success.data = true;
     res.error_message.data = "";
@@ -126,52 +127,54 @@ bool CANopenInit(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &r
 }
 
 
-bool CANopenRecover(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &res, std::string chainName)
+//bool CANopenRecover(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &res, std::string chainName)
+//{
+
+
+//    ROS_INFO("Recovering modules");
+//    canopen::recover_staubsauger(deviceFile, canopen::syncInterval);
+//    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+
+
+//    for (auto device : canopen::devices)
+//    {
+
+
+//        device.second.setInitialized(true);
+//    }
+
+//    res.success.data = true;
+//    res.error_message.data = "";
+//    ROS_INFO("Recover concluded");
+//    return true;
+//}
+
+bool STAUBon(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &res, std::string chainName)
 {
 
 
-    ROS_INFO("Recovering modules");
-    canopen::recover(deviceFile, canopen::syncInterval);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    ROS_INFO("Turning vacuum cleaner on");
 
-
-    for (auto device : canopen::devices)
-    {
-        canopen::sendSDO(device.second.getCANid(), canopen::MODES_OF_OPERATION, canopen::MODES_OF_OPERATION_INTERPOLATED_POSITION_MODE);
-        //std::cout << "Setting IP mode for: " << (uint16_t)device.second.getCANid() << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-    }
-    //canopen::initDeviceManagerThread(canopen::deviceManager);
-
-    for (auto device : canopen::devices)
-    {
-        canopen::devices[device.second.getCANid()].setDesiredPos((double)device.second.getActualPos());
-        canopen::devices[device.second.getCANid()].setDesiredVel(0);
-
-        canopen::sendPos((uint16_t)device.second.getCANid(), (double)device.second.getDesiredPos());
-        canopen::sendPos((uint16_t)device.second.getCANid(), (double)device.second.getDesiredPos());
-
-        device.second.setInitialized(true);
-    }
+    canopen::volt_value = 80.0;
 
     res.success.data = true;
     res.error_message.data = "";
-    ROS_INFO("Recover concluded");
+    ROS_INFO("Turned Vacuum Cleaner on");
     return true;
 }
 
-
-bool CANOpenHalt(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &res, std::string chainName)
+bool STAUBoff(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &res, std::string chainName)
 {
 
 
-    ROS_INFO("Halting modules");
-    canopen::halt(deviceFile, canopen::syncInterval);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    ROS_INFO("Turning Vacuum cleaner off");
+
+    canopen::volt_value = 0.;
 
     res.success.data = true;
     res.error_message.data = "";
+    ROS_INFO("Turned Vacuum Cleaner off");
     return true;
 }
 
@@ -189,10 +192,37 @@ void setVel(const brics_actuator::JointVelocities &msg, std::string chainName)
         std::vector<double> velocities;
         std::vector<double> positions;
 
+        double velocity;
 
         for (auto it : msg.velocities)
         {
-            velocities.push_back( it.value);
+            velocity = it.value;
+
+
+            if(velocity > 0)
+            {
+                if(canopen::halt_positive)
+                {
+                    velocity = 0;
+                    ROS_WARN("Current position is extreme positive. Can not move more in this direction.");
+                    //canopen::staubsauger_halt(deviceFile, canopen::syncInterval);
+                }
+            }
+
+
+            if(velocity < 0)
+            {
+                if(canopen::halt_negative)
+                {
+                    velocity = 0;
+
+                    ROS_WARN("Current position is extreme negative. Can not move more in this direction.");
+                    //canopen::staubsauger_halt(deviceFile, canopen::syncInterval);
+                }
+            }
+
+
+            velocities.push_back( velocity);
         }
 
         for (auto device : canopen::devices)
@@ -200,8 +230,8 @@ void setVel(const brics_actuator::JointVelocities &msg, std::string chainName)
             positions.push_back((double)device.second.getDesiredPos());
         }
 
-        joint_limits_->checkVelocityLimits(velocities);
-        joint_limits_->checkPositionLimits(velocities, positions);
+        //joint_limits_->checkVelocityLimits(velocities);
+        //joint_limits_->checkPositionLimits(velocities, positions);
 
         canopen::deviceGroups[chainName].setVel(velocities);
     }
@@ -210,14 +240,14 @@ void setVel(const brics_actuator::JointVelocities &msg, std::string chainName)
 void readParamsFromParameterServer(ros::NodeHandle n)
 {
     XmlRpc::XmlRpcValue busParams;
-
+    std::cout << "323" << std::endl;
     if (!n.hasParam("devices") || !n.hasParam("chains"))
     {
         ROS_ERROR("Missing parameters on parameter server; shutting down node.");
         ROS_ERROR("Please consult the user manual for necessary parameter settings.");
         n.shutdown();
     }
-
+    std::cout << "323" << std::endl;
     n.getParam("devices", busParams);
     for (int i=0; i<busParams.size(); i++)
     {
@@ -227,32 +257,32 @@ void readParamsFromParameterServer(ros::NodeHandle n)
         busParam.syncInterval = static_cast<int>(busParams[i]["sync_interval"]);
         buses[name] = busParam;
     }
-
+std::cout << "323" << std::endl;
     XmlRpc::XmlRpcValue chainNames_XMLRPC;
     n.getParam("chains", chainNames_XMLRPC);
 
     for (int i=0; i<chainNames_XMLRPC.size(); i++)
         chainNames.push_back(static_cast<std::string>(chainNames_XMLRPC[i]));
-
+std::cout << "323" << std::endl;
     for (auto chainName : chainNames) {
         XmlRpc::XmlRpcValue jointNames_XMLRPC;
-        n.getParam("/" + chainName + "/joint_names", jointNames_XMLRPC);
-
-        for (int i=0; i<jointNames_XMLRPC.size(); i++)
-            jointNames.push_back(static_cast<std::string>(jointNames_XMLRPC[i]));
-
+            n.getParam("/" + chainName + "/joint_names", jointNames_XMLRPC);
+    std::cout << "323" << std::endl;
+            for (int i=0; i<jointNames_XMLRPC.size(); i++)
+                jointNames.push_back(static_cast<std::string>(jointNames_XMLRPC[i]));
+std::cout << "323" << std::endl;
         XmlRpc::XmlRpcValue moduleIDs_XMLRPC;
         n.getParam("/" + chainName + "/module_ids", moduleIDs_XMLRPC);
         std::vector<uint8_t> moduleIDs;
         for (int i=0; i<moduleIDs_XMLRPC.size(); i++)
             moduleIDs.push_back(static_cast<int>(moduleIDs_XMLRPC[i]));
-
+std::cout << "323" << std::endl;
         XmlRpc::XmlRpcValue devices_XMLRPC;
         n.getParam("/" + chainName + "/devices", devices_XMLRPC);
         std::vector<std::string> devices;
         for (int i=0; i<devices_XMLRPC.size(); i++)
             devices.push_back(static_cast<std::string>(devices_XMLRPC[i]));
-
+std::cout << "323" << std::endl;
         for (unsigned int i=0; i<jointNames.size(); i++)
             canopen::devices[ moduleIDs[i] ] = canopen::Device(moduleIDs[i], jointNames[i], chainName, devices[i]);
 
@@ -295,7 +325,7 @@ void setJointConstraints(ros::NodeHandle n)
           ROS_ERROR("Unable to load robot model from parameter %s",full_param_name.c_str());
           n.shutdown();
       }
-      ROS_INFO("%s content\n%s", full_param_name.c_str(), xml_string.c_str());
+      //ROS_INFO("%s content\n%s", full_param_name.c_str(), xml_string.c_str());
 
       /// Get urdf model out of robot_description
       urdf::Model model;
@@ -355,10 +385,11 @@ int main(int argc, char **argv)
     // todo: allow identical module IDs of modules when they are on different CAN buses
 
 
-    ros::init(argc, argv, "canopen_ros");
+    ros::init(argc, argv, "canopen_ros_staubsauger");
     ros::NodeHandle n(""); // ("~");
 
     readParamsFromParameterServer(n);
+    //canopen::operation_mode = canopen::MODES_OF_OPERATION_PROFILE_VELOCITY_MODE;
 
     std::cout << "Sync Interval" << buses.begin()->second.syncInterval << std::endl;
     canopen::syncInterval = std::chrono::milliseconds( buses.begin()->second.syncInterval );
@@ -377,27 +408,26 @@ int main(int argc, char **argv)
         std::cout << "Connection to CAN bus established" << std::endl;
     }
 
-    canopen::pre_init();
+    //canopen::pre_init();
 
     /********************************************/
 
     // add custom PDOs:
-    canopen::sendPos = canopen::defaultPDOOutgoing;
     canopen::sendVol = canopen::defaultPDOOutgoing_staubsauger;
-    for (auto it : canopen::devices) {
-        canopen::incomingPDOHandlers[ 0x180 + it.first ] = [it](const TPCANRdMsg m) { canopen::defaultPDO_incoming( it.first, m ); };
-        canopen::incomingEMCYHandlers[ 0x081 + it.first ] = [it](const TPCANRdMsg mE) { canopen::defaultEMCY_incoming( it.first, mE ); };
-    }
+    canopen::volt_value = (double)(0.0);
+
 
     // set up services, subscribers, and publishers for each of the chains:
     std::vector<TriggerType> initCallbacks;
     std::vector<ros::ServiceServer> initServices;
     std::vector<TriggerType> recoverCallbacks;
     std::vector<ros::ServiceServer> recoverServices;
-    std::vector<TriggerType> stopCallbacks;
-    std::vector<ros::ServiceServer> stopServices;
     std::vector<SetOperationModeCallbackType> setOperationModeCallbacks;
     std::vector<ros::ServiceServer> setOperationModeServices;
+    std::vector<TriggerType> offCallbacks;
+    std::vector<ros::ServiceServer> offServices;
+    std::vector<TriggerType> onCallbacks;
+    std::vector<ros::ServiceServer> onServices;
 
     std::vector<JointVelocitiesType> jointVelocitiesCallbacks;
     std::vector<ros::Subscriber> jointVelocitiesSubscribers;
@@ -412,53 +442,33 @@ int main(int argc, char **argv)
 
         initCallbacks.push_back( boost::bind(CANopenInit, _1, _2, it.first) );
         initServices.push_back( n.advertiseService("/" + it.first + "/init", initCallbacks.back()) );
-        recoverCallbacks.push_back( boost::bind(CANopenRecover, _1, _2, it.first) );
-        recoverServices.push_back( n.advertiseService("/" + it.first + "/recover", recoverCallbacks.back()) );
-        stopCallbacks.push_back( boost::bind(CANOpenHalt, _1, _2, it.first) );
-        stopServices.push_back( n.advertiseService("/" + it.first + "/halt", stopCallbacks.back()) );
-        setOperationModeCallbacks.push_back( boost::bind(setOperationModeCallback, _1, _2, it.first) );
-        setOperationModeServices.push_back( n.advertiseService("/" + it.first + "/set_operation_mode", setOperationModeCallbacks.back()) );
+        //recoverCallbacks.push_back( boost::bind(CANopenRecover, _1, _2, it.first) );
+        //recoverServices.push_back( n.advertiseService("/" + it.first + "/recover", recoverCallbacks.back()) );
+        //setOperationModeCallbacks.push_back( boost::bind(setOperationModeCallback, _1, _2, it.first) );
+        //setOperationModeServices.push_back( n.advertiseService("/" + it.first + "/set_operation_mode", setOperationModeCallbacks.back()) );
 
         jointVelocitiesCallbacks.push_back( boost::bind(setVel, _1, it.first) );
         jointVelocitiesSubscribers.push_back( n.subscribe<brics_actuator::JointVelocities>("/" + it.first + "/command_vel", 1, jointVelocitiesCallbacks.back()) );
 
-        currentOperationModePublishers[it.first] = n.advertise<std_msgs::String>("/" + it.first + "/current_operationmode", 1);
+       // currentOperationModePublishers[it.first] = n.advertise<std_msgs::String>("/" + it.first + "/current_operationmode", 1);
 
-        statePublishers[it.first] = n.advertise<pr2_controllers_msgs::JointTrajectoryControllerState>("/" + it.first + "/state", 1);
+        onCallbacks.push_back( boost::bind(STAUBon, _1, _2, it.first) );
+        onServices.push_back( n.advertiseService("/" + it.first + "/staub_on", onCallbacks.back()) );
+        offCallbacks.push_back( boost::bind(STAUBoff, _1, _2, it.first) );
+        offServices.push_back( n.advertiseService("/" + it.first + "/staub_off", offCallbacks.back()) );
+
+        //statePublishers[it.first] = n.advertise<pr2_controllers_msgs::JointTrajectoryControllerState>("/" + it.first + "/state", 1);
     }
 
     double lr = 1000.0 / std::chrono::duration_cast<std::chrono::milliseconds>(canopen::syncInterval).count();
 
     ros::Rate loop_rate(lr);
 
-    setJointConstraints(n);
+    //setJointConstraints(n);
 
     while (ros::ok())
     {
 
-    // iterate over all chains, get current pos and vel and publish as topics:
-        for (auto dg : (canopen::deviceGroups))
-        {
-            sensor_msgs::JointState js;
-            js.name = dg.second.getNames();
-            js.header.stamp = ros::Time::now(); // todo: possibly better use timestamp of hardware msg?
-            js.position = dg.second.getActualPos();
-            js.velocity = dg.second.getActualVel();
-            js.effort = std::vector<double>(dg.second.getNames().size(), 0.0);
-            jointStatesPublisher.publish(js);
-
-            pr2_controllers_msgs::JointTrajectoryControllerState jtcs;
-            jtcs.header.stamp = js.header.stamp;
-            jtcs.actual.positions = js.position;
-            jtcs.actual.velocities = js.velocity;
-            jtcs.desired.positions = dg.second.getDesiredPos();
-            jtcs.desired.velocities = dg.second.getDesiredVel();
-            statePublishers[dg.first].publish(jtcs);
-
-            std_msgs::String opmode;
-            opmode.data = "velocity";
-            currentOperationModePublishers[dg.first].publish(opmode);
-        }
 
         // publishing diagnostic messages
         diagnostic_msgs::DiagnosticArray diagnostics;
@@ -544,14 +554,14 @@ int main(int argc, char **argv)
           {
             diagstatus.level = 0;
             diagstatus.name = chainNames[0];
-            diagstatus.message = "canopen chain initialized and running";
+            diagstatus.message = "canopen_staubsauger chain initialized and running";
             diagstatus.values = keyvalues;
           }
           else
           {
             diagstatus.level = 1;
             diagstatus.name = chainNames[0];
-            diagstatus.message = "canopen chain not initialized";
+            diagstatus.message = "canopen_staubsauger chain not initialized";
             diagstatus.values = keyvalues;
             break;
           }

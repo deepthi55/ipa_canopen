@@ -618,7 +618,9 @@ namespace canopen{
 
     extern bool atFirstInit;
     extern bool recover_active;
+    extern bool staub_active;
     extern bool halt_active;
+    extern double volt_value;
 
     extern bool halt_positive;
     extern bool halt_negative;
@@ -628,6 +630,7 @@ namespace canopen{
     bool openConnection(std::string devName);
     void init(std::string deviceFile, std::chrono::milliseconds syncInterval);
     void init_elmo(std::string deviceFile, std::chrono::milliseconds syncInterval);
+    void init_staubsauger(std::string deviceFile, std::chrono::milliseconds syncInterval);
     void pre_init();
     void recover(std::string deviceFile, std::chrono::milliseconds syncInterval);
 	void recover_elmo(std::string deviceFile, std::chrono::milliseconds syncInterval);
@@ -636,6 +639,7 @@ namespace canopen{
 
     extern std::function< void (uint16_t CANid, double positionValue) > sendPos;
     extern std::function< void (uint16_t CANid, double velocityValue) > sendVel;
+    extern std::function< void (uint16_t CANid, double voltageValue) > sendVol;
     extern std::function< void (uint16_t CANid) > geterrors;
 
     /***************************************************************/
@@ -779,9 +783,13 @@ namespace canopen{
     void initDeviceManagerThread(std::function<void ()> const& deviceManager);
     void deviceManager();
     void deviceManager_elmo();
+    void deviceManager_staubsauger();
 
     void defaultPDOOutgoing(uint16_t CANid, double positionValue);
     void defaultPDOOutgoing_elmo(uint16_t CANid, double velocityValue);
+    //SPECIFIC FOR AUTOPNP
+    void defaultPDOOutgoing_staubsauger(uint16_t CANid, double Voltage);
+    //
     void posPDOOutgoing_elmo(uint16_t CANid, double positionValue);
     void defaultPDO_incoming(uint16_t CANid, const TPCANRdMsg m);
     void defaultPDO_incoming_status_elmo(uint16_t CANid, const TPCANRdMsg m);
